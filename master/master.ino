@@ -148,7 +148,7 @@ int quantValueBitCounter = 0;
 boolean quantValueSet = false;
 unsigned long quantValuePreviousMillis;
 boolean quantValuePreviousSet = false;
-const int quantValueSetTiming[] = {400, 50};
+const unsigned int quantValueSetTiming[] = {400, 50};
 
 // ////////////////////////////// STRUCTURE ////////////////////////////////////////////////////////////
 
@@ -192,8 +192,8 @@ AudioSynthWaveformSine  qualSine0;
 AudioSynthWaveformSine  qualSine1;
 AudioSynthWaveformSine  qualSine2;
 AudioSynthWaveform      qualSawtooth0;
-AudioSynthWaveform      qualSawtooth0;
-AudioSynthWaveform      qualSawtooth0;
+AudioSynthWaveform      qualSawtooth1;
+AudioSynthWaveform      qualSawtooth2;
 
 AudioMixer4             qualDurMixer;
 AudioMixer4             qualMollMixer;
@@ -480,8 +480,8 @@ void encoder() {
   
     if (encNew != encPos) {
       if (quantValueSet) {
-        if (currentMillis  - quantValuePreviousMillis <= quantValueSetTiming[1]) quantValue = quantValue + 100 * (encPos - encNew);
-        else if (currentMillis  - quantValuePreviousMillis <= quantValueSetTiming[0]) quantValue = quantValue + 10 * (encPos - encNew);
+        if (currentMillis - quantValuePreviousMillis <= quantValueSetTiming[1]) quantValue = quantValue + 100 * (encPos - encNew);
+        else if (currentMillis - quantValuePreviousMillis <= quantValueSetTiming[0]) quantValue = quantValue + 10 * (encPos - encNew);
         else quantValue = quantValue + 1 * (encPos - encNew);
         quantValuePreviousMillis = currentMillis;
         Serial.println(encPos);
@@ -589,7 +589,7 @@ void introduction() {
       introNotePreviousMillis = currentMillis;
       if (!introPlayTone) {
         if (introSequences[stepValue[0] - 2][introCounter] != 0) {
-          introSine.frequency(introDeciFrequencies[introSequences[stepValue[0] - 2][introCounter] - 1])
+          introSine.frequency(introDeciFrequencies[introSequences[stepValue[0] - 2][introCounter] - 1]);
           introEnv.noteOn();
           introPlayTone = true;
         }
