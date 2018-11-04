@@ -327,6 +327,8 @@ AudioConnection          patchXX03(masterMixer, 0, LineOut, 1);
 
 // ////////////////////////////// PROGRMM ////////////////////////////////////////////////////////////
 
+// /////////////// SETUP ///////////////
+
 void setup() {
   // Memory Space
   AudioMemory(16);
@@ -416,12 +418,15 @@ void setup() {
   Serial.begin(9600);
 }
 
+// /////////////// LOOP ///////////////
+
 void loop() {
   currentMillis = millis();
 
   encoder();
   shiftregister();
   
+
   if (messagePlay) {
     if (messageState == 0) {
       if (stepValue[0] != 0) introduction();
@@ -447,9 +452,11 @@ void loop() {
   else {
     introEnv.noteOff();
     masterMixer0.gain(1, 0);
-    masterMixer1.gain(0, 0);
+    masterMixer0.gain(3, 0);
+    masterMixer1.gain(1, 0);
     formEnv.noteOff();
   }
+
 }
 
 void resetAll() {
