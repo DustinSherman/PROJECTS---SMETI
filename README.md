@@ -1,2 +1,2 @@
 ### PROJECTS
-#SMETI
+# SMETI
