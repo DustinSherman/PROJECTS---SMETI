@@ -61,7 +61,7 @@ int stepValue[5] = {0, 0, 0, 0, 0};
 
 // /////////////// INTRODUCTION ///////////////
 
-const int introDeciFrequencies[] = {440, 400, 360, 320, 280, 220};
+const int introDeciFrequencies[] = {440, 400, 360, 320, 280, 220, 180};
 int introDeciCounter = 0;
 const int introNotesCount[] = {40, 57, 39, 35};
 unsigned long introNotePreviousMillis = 0;
@@ -574,19 +574,29 @@ void shiftregister() {
 // ////////////////////////////// INTRODUCTION //////////////////////////////
 
 void introduction() {
-  if (introDeciCounter < 60) {
+  if (introDeciCounter < 73) {
     if (currentMillis - introNotePreviousMillis >= introNoteClock) {
       introNotePreviousMillis = currentMillis;
       if (!introPlayTone) {
-        if (introDeciCounter + 11 % 12 != 0) introEnv.noteOn();
-        if (introDeciCounter - 1 % 12 == 0) introSine.frequency(introDeciFrequencies[int(introDeciCounter/12)]);
+        Serial.println(introDeciCounter);
+
+        if (introDeciCounter % 12 == 0 && introDeciCounter != 0) {
+          introSine.frequency(introDeciFrequencies[int(introDeciCounter/12)]);
+          Serial.print("NEW FREQUENCY: ");
+          Serial.println(introDeciFrequencies[int(introDeciCounter/12)]);
+        }
+        if (introDeciCounter % 12 != 1) {
+          introEnv.noteOn();
+          Serial.println("PLAY NOTE");
+        }
 
         introPlayTone = true;
-        introDeciCounter++;
       }
       else {
         introEnv.noteOff();
         introPlayTone = false;
+        introDeciCounter++;
+        Serial.println("NOTE OFF");
       }
     }
   }
