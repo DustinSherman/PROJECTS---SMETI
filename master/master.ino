@@ -582,13 +582,9 @@ void introduction() {
 
         if (introDeciCounter % 12 == 0 && introDeciCounter != 0) {
           introSine.frequency(introDeciFrequencies[int(introDeciCounter/12)]);
-          Serial.print("NEW FREQUENCY: ");
           Serial.println(introDeciFrequencies[int(introDeciCounter/12)]);
         }
-        if (introDeciCounter % 12 != 1) {
-          introEnv.noteOn();
-          Serial.println("PLAY NOTE");
-        }
+        if (introDeciCounter % 12 != 1) introEnv.noteOn();
 
         introPlayTone = true;
       }
@@ -596,7 +592,6 @@ void introduction() {
         introEnv.noteOff();
         introPlayTone = false;
         introDeciCounter++;
-        Serial.println("NOTE OFF");
       }
     }
   }
