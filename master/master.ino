@@ -51,7 +51,7 @@ int segmentPlayCounter = 0;
 int segmentPlayMax = 3;
 
 // stepValue
-const int stepValueMax[] = {4, 8, 9, 7, 2};
+int stepValueMax[] = {4, 8, 9, 7, 2};
 // Steps
 int stepSelected = 0;
 const int stepCount = 5;
@@ -160,8 +160,11 @@ const int qualDurFrequencies[][3] = {
 
 unsigned long quantNotePreviousMillis = 0;
 unsigned int quantNoteClock = introNoteClock;
-int quantCounter = 0;
 boolean quantPlayTone = false;
+
+
+int quantCounter = 0;
+
 int quantValue = 0;
 int quantValueCounter = 0;
 int quantValueBitCounter = 0;
@@ -555,7 +558,10 @@ void encoder() {
   if (!messagePlay) {
     long encNew;
     encNew = enc.read()/4;
-  
+
+    if (stepValue[0] != 0) stepValueMax[3] = 3;
+    else stepValueMax[3] = 7;
+
     if (encNew != encPos) {
       if (quantValueSet) {
         if (currentMillis - quantValuePreviousMillis <= quantValueSetTiming[1]) quantValue = quantValue + 100 * (encPos - encNew);
@@ -644,17 +650,16 @@ void shiftregister() {
 // ////////////////////////////// INTRODUCTION //////////////////////////////
 
 void introduction() {
-  if (introDeciCounter < 73) {
+  if (introDeciCounter < 49) {
     if (currentMillis - introNotePreviousMillis >= introNoteClock) {
       introNotePreviousMillis = currentMillis;
       if (!introPlayTone) {
-        Serial.println(introDeciCounter);
-
         if (introDeciCounter % 12 == 0 && introDeciCounter != 0) {
           introSine.frequency(introDeciFrequencies[int(introDeciCounter/12)]);
-          Serial.println(introDeciFrequencies[int(introDeciCounter/12)]);
         }
-        if (introDeciCounter % 12 != 1) introEnv.noteOn();
+        if (introDeciCounter % 12 != 1) {
+          introEnv.noteOn();
+        }
 
         introPlayTone = true;
       }
@@ -801,6 +806,12 @@ void quality() {
 void quantity() {
   if (currentMillis - quantNotePreviousMillis >= quantNoteClock) {
     quantNotePreviousMillis = currentMillis;
+
+
+
+
+
+
 
     if (quantValueBitCounter < 5) {
       while (bitRead(quantValue - int(quantValue/32) * 32, quantValueBitCounter) == 0) quantValueBitCounter++;

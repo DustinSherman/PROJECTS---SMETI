@@ -33,50 +33,13 @@ Mathematische Formeln und Folgen werden als Einführung der Nachricht vorn an ge
 	- 6-9 - Neutral Positiv bis Sehr positiv <br>Man kann mit Hilfe dieses Parameters bestimmen ob eine Aussage oder Frage eine negative oder positive Eigenschaft beifügen. Zu dem lassen sich damit Fragen beantworten sofern dies vom Fragekontext möglich ist. Die einstellbare Skala geht dabei von 1 (sehr negativ) über 4/5 (neutral) bis hin zu 9 (sehr positiv).<br>*Der erzeugte Ton ist eine Mischung aus einer Dur-Sinuswelle für postive Aspekte und einem Moll-Dreieckwelle für negative Aspekte die jeweils in ihrer Tonhöhe angepasst werden.*
 - **WERT 4** 
  	- 0 - Keine quantitative Aussage
-	- 1 - Einführung Quantität
-	- 2 - Distanz / Einführung Quantität
-	- 3 - Distanz
-	- 4 - Zeit / Einführung Quantität
-	- 5 - Zeit
-	- 6 - Anzahl / Einführung Quantität
-	- 7 - Anzahl- Quantitive Aussage<br>Hierüber lassen sich quantitive Aussagen über die Einheiten Zeit, Distanz und Anzahl machen. Man legt dabei zuerst fest was man darstellen möchte und ob eine Einleitunsgsequenz, welche die einzelnen Einheiten und ihre Quantisierung erläutert, abgespielt werden soll. Im Anschluss kann man die zu sendende Zahl eingeben.<br>
-Einführung:
-<table>
-<tr><th>Number</th><th>440Hz (1)</th><th>400Hz (2)</th><th>360Hz (4)</th><th>320Hz (8)</th><th>280Hz (16)</th><th>220Hz (32)</th></tr>
-<tr><td>01</td><td>X</td><td></td><td></td><td></td><td></td><td></td></tr>
-<tr><td>02</td><td></td><td>X</td><td></td><td></td><td></td><td></td></tr>
-<tr><td>03</td><td>X</td><td>X</td><td></td><td></td><td></td><td></td></tr>
-<tr><td>04</td><td></td><td></td><td>X</td><td></td><td></td><td></td></tr>
-<tr><td>05</td><td>X</td><td></td><td>X</td><td></td><td></td><td></td></tr>
-<tr><td>06</td><td></td><td>X</td><td>X</td><td></td><td></td><td></td></tr>
-<tr><td>07</td><td>X</td><td>X</td><td>X</td><td></td><td></td><td></td></tr>
-<tr><td>08</td><td></td><td></td><td></td><td>X</td><td></td><td></td></tr>
-<tr><td>09</td><td>X</td><td></td><td></td><td>X</td><td></td><td></td></tr>
-<tr><td>10</td><td></td><td>X</td><td></td><td>X</td><td></td><td></td></tr>
-<tr><td>11</td><td>X</td><td>X</td><td></td><td>X</td><td></td><td></td></tr>
-<tr><td>12</td><td></td><td></td><td>X</td><td>X</td><td></td><td></td></tr>
-<tr><td>13</td><td>X</td><td></td><td>X</td><td>X</td><td></td><td></td></tr>
-<tr><td>14</td><td></td><td>X</td><td>X</td><td>X</td><td></td><td></td></tr>
-<tr><td>15</td><td>X</td><td>X</td><td>X</td><td>X</td><td></td><td></td></tr>
-<tr><td>16</td><td></td><td></td><td></td><td></td><td>X</td><td></td></tr>
-<tr><td>17</td><td>X</td><td></td><td></td><td></td><td>X</td><td></td></tr>
-<tr><td>18</td><td></td><td>X</td><td></td><td></td><td>X</td><td></td></tr>
-<tr><td>19</td><td>X</td><td>X</td><td></td><td></td><td>X</td><td></td></tr>
-<tr><td>20</td><td></td><td></td><td>X</td><td></td><td>X</td><td></td></tr>
-<tr><td>21</td><td>X</td><td></td><td>X</td><td></td><td>X</td><td></td></tr>
-<tr><td>22</td><td></td><td>X</td><td>X</td><td></td><td>X</td><td></td></tr>
-<tr><td>23</td><td>X</td><td>X</td><td>X</td><td></td><td>X</td><td></td></tr>
-<tr><td>24</td><td></td><td></td><td></td><td>X</td><td>X</td><td></td></tr>
-<tr><td>25</td><td>X</td><td></td><td></td><td>X</td><td>X</td><td></td></tr>
-<tr><td>26</td><td></td><td>X</td><td></td><td>X</td><td>X</td><td></td></tr>
-<tr><td>27</td><td>X</td><td>X</td><td></td><td>X</td><td>X</td><td></td></tr>
-<tr><td>28</td><td></td><td></td><td>X</td><td>X</td><td>X</td><td></td></tr>
-<tr><td>29</td><td>X</td><td></td><td>X</td><td>X</td><td>X</td><td></td></tr>
-<tr><td>30</td><td></td><td>X</td><td>X</td><td>X</td><td>X</td><td></td></tr>
-<tr><td>31</td><td>X</td><td>X</td><td>X</td><td>X</td><td>X</td><td></td></tr>
-<tr><td>32</td><td></td><td></td><td></td><td></td><td></td><td>X</td></tr>
-<tr><td colspan="7"> <strong>...</strong> </td></tr>
-</table>
+	- (1 - Einführung Dezimalsystem)
+	- (2 - Einführung Dezimalsystem - Distanz)
+	- 1(3) - Distanz
+	- (4 - Einführung Dezimalsystem - Zeit)
+	- 2(5) - Zeit
+	- (6 - Einführung Dezimalsystem - Anzahl)
+	- 3(7) - Anzahl<br>Hierüber lassen sich quantitive Aussagen über die Einheiten Zeit, Distanz und Anzahl machen. Man legt dabei zuerst fest was man darstellen möchte und ob eine Einleitunsgsequenz, welche die einzelnen Einheiten und ihre Quantisierung erläutert, abgespielt werden soll. Die Option einer Einleitungssequenz besteht nur wenn diese nicht schon bereits in der Einführung ausgewählt wurde. Im Anschluss kann man die zu sendende Zahl eingeben.<br>
 *Quantität wird über einen einfach Sinuston dargestellt (siehe Einführung). Jeweils die Quadratzahlen bis 32 sind entsprechend ihrer Position 40 Hz tiefer. Distanz wird mittels eines Noise-Generators der im Panorama von rechts nach links wandert dargestellt. Zeit ist ein regelmäßiges, gleichmäßiges Ticken. Eine Anzahl wird entsprechend mit einem einfachen Sinuston dargestellt.*
 - **WERT 5** - Interstellare Objekte<br>
 	- 0 - Kein interstellares Objekt
