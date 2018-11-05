@@ -30,7 +30,7 @@ Mathematische Formeln und Folgen werden als Einführung der Nachricht vorn an ge
 	- 0 - Kein wertende Aussage
 	- 1-4 - Sehr negativ bis Neutral Negativ
 	- 5 - Neutral
-	- 6-9 - Neutral Positiv bis Sehr positiv <br>Man kann mit Hilfe dieses Parameters bestimmen ob eine Aussage oder Frage eine negative oder positive Eigenschaft beifügen. Zu dem lassen sich damit Fragen beantworten sofern dies vom Fragekontext möglich ist. Die einstellbare Skala geht dabei von 1 (sehr negativ) über 4/5 (neutral) bis hin zu 9 (sehr positiv).<br>*Der erzeugte Ton ist eine Mischung aus einer Dur-Sinuswelle für postive Aspekte und einem Moll-Sägezahnwelle für negative Aspekte die jeweils im Verhältnis des eingestellten Wert gemischt werden.*
+	- 6-9 - Neutral Positiv bis Sehr positiv <br>Man kann mit Hilfe dieses Parameters bestimmen ob eine Aussage oder Frage eine negative oder positive Eigenschaft beifügen. Zu dem lassen sich damit Fragen beantworten sofern dies vom Fragekontext möglich ist. Die einstellbare Skala geht dabei von 1 (sehr negativ) über 4/5 (neutral) bis hin zu 9 (sehr positiv).<br>*Der erzeugte Ton ist eine Mischung aus einer Dur-Sinuswelle für postive Aspekte und einem Moll-Dreieckwelle für negative Aspekte die jeweils in ihrer Tonhöhe angepasst werden.*
 - **WERT 4** 
  	- 0 - Keine quantitative Aussage
 	- 1 - Einführung Quantität
