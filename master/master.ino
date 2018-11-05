@@ -189,28 +189,44 @@ AudioConnection         patchForm01(formEnv, 0, masterMixer0, 2);
 // /////////////// QUALITY ///////////////
 
 AudioSynthWaveformSine  qualSine0;
+AudioEffectEnvelope     qualSine0Env;
 AudioSynthWaveformSine  qualSine1;
+AudioEffectEnvelope     qualSine1Env;
 AudioSynthWaveformSine  qualSine2;
+AudioEffectEnvelope     qualSine2Env;
 AudioSynthWaveform      qualSawtooth0;
+AudioEffectEnvelope     qualSawtooth0Env;
 AudioSynthWaveform      qualSawtooth1;
+AudioEffectEnvelope     qualSawtooth1Env;
 AudioSynthWaveform      qualSawtooth2;
+AudioEffectEnvelope     qualSawtooth2Env;
+
+AudioEffectEnvelope     qualEnvelopes[] = {qualSine0Env, qualSine1Env, qualSine2Env, qualSawtooth0Env, qualSawtooth1Env, qualSawtooth2Env};
 
 AudioMixer4             qualDurMixer;
 AudioMixer4             qualMollMixer;
 AudioMixer4             qualMixer;
 
 // Patches
-AudioConnection         patchQual00(qualSine0, 0, qualDurMixer, 0);
-AudioConnection         patchQual01(qualSine1, 0, qualDurMixer, 1);
-AudioConnection         patchQual02(qualSine2, 0, qualDurMixer, 2);
-AudioConnection         patchQual03(qualSawtooth0, 0, qualMollMixer, 0);
-AudioConnection         patchQual04(qualSawtooth1, 0, qualMollMixer, 1);
-AudioConnection         patchQual05(qualSawtooth2, 0, qualMollMixer, 2);
+AudioConnection         patchQual00(qualSine0, qualSine0Env);
+AudioConnection         patchQual01(qualSine1, qualSine1Env);
+AudioConnection         patchQual02(qualSine2, qualSine2Env);
+AudioConnection         patchQual03(qualSawtooth0, qualSawtooth0Env);
+AudioConnection         patchQual04(qualSawtooth1, qualSawtooth1Env);
+AudioConnection         patchQual05(qualSawtooth2, qualSawtooth2Env);
 
-AudioConnection         patchQual06(qualDurMixer, 0, qualMixer, 0);
-AudioConnection         patchQual07(qualMollMixer, 0, qualMixer, 1);
+AudioConnection         patchQual06(qualSine0Env, 0, qualDurMixer, 0);
+AudioConnection         patchQual07(qualSine1Env, 0, qualDurMixer, 1);
+AudioConnection         patchQual08(qualSine2Env, 0, qualDurMixer, 2);
+AudioConnection         patchQual09(qualSawtooth0Env, 0, qualMollMixer, 0);
+AudioConnection         patchQual10(qualSawtooth1Env, 0, qualMollMixer, 1);
+AudioConnection         patchQual11(qualSawtooth2Env, 0, qualMollMixer, 2);
 
-AudioConnection         patchQual08(qualMixer, 0, masterMixer0, 3);
+
+AudioConnection         patchQual12(qualDurMixer, 0, qualMixer, 0);
+AudioConnection         patchQual13(qualMollMixer, 0, qualMixer, 1);
+
+AudioConnection         patchQual14(qualMixer, 0, masterMixer0, 3);
 
 // /////////////// QUANTITY ///////////////
 
@@ -363,9 +379,22 @@ void setup() {
   qualSine0.frequency(qualDurFrequencies[0]);
   qualSine1.frequency(qualDurFrequencies[1]);
   qualSine2.frequency(qualDurFrequencies[2]);
-  qualSawtooth0.begin(1, qualMollFrequencies[0], WAVEFORM_SAWTOOTH);
-  qualSawtooth1.begin(1, qualMollFrequencies[1], WAVEFORM_SAWTOOTH);
-  qualSawtooth2.begin(1, qualMollFrequencies[2], WAVEFORM_SAWTOOTH);
+  qualSawtooth0.begin(0.5, qualMollFrequencies[0], WAVEFORM_SAWTOOTH);
+  qualSawtooth1.begin(0.5, qualMollFrequencies[1], WAVEFORM_SAWTOOTH);
+  qualSawtooth2.begin(0.5, qualMollFrequencies[2], WAVEFORM_SAWTOOTH);
+  qualSine0Env.attack(1500);
+  qualSine1Env.attack(1500);
+  qualSine2Env.attack(1500);
+  qualSawtooth0Env.attack(1500);
+  qualSawtooth1Env.attack(1500);
+  qualSawtooth2Env.attack(1500);
+
+  for (int i = 0; i < 3; i++) {
+    qualDurMixer.gain(i, 1);
+    qualMollMixer.gain(i, 1);
+  }
+  qualMixer.gain(0, 1);
+  qualMixer.gain(1, 1);
 
   // Gasplanet (Jupiter)
   planetGasNoise.amplitude(0.5);
@@ -424,8 +453,7 @@ void loop() {
   currentMillis = millis();
 
   encoder();
-  shiftregister();
-  
+  shiftregister();  
 
   if (messagePlay) {
     if (messageState == 0) {
@@ -452,9 +480,14 @@ void loop() {
   else {
     introEnv.noteOff();
     masterMixer0.gain(1, 0);
-    masterMixer0.gain(3, 0);
     masterMixer1.gain(1, 0);
     formEnv.noteOff();
+    qualSine0Env.noteOff();
+    qualSine1Env.noteOff();
+    qualSine2Env.noteOff();
+    qualSawtooth0Env.noteOff();
+    qualSawtooth1Env.noteOff();
+    qualSawtooth2Env.noteOff();
   }
 
 }
@@ -491,7 +524,6 @@ void encoder() {
         else if (currentMillis - quantValuePreviousMillis <= quantValueSetTiming[0]) quantValue = quantValue + 10 * (encPos - encNew);
         else quantValue = quantValue + 1 * (encPos - encNew);
         quantValuePreviousMillis = currentMillis;
-        Serial.println(encPos);
       }
       encPos = encNew;
     }
@@ -675,27 +707,39 @@ void quality() {
   if (stepValue[2] == 0) messageState++;
   else {
     if (stepValue[2] < 5) {
-      qualMixer.gain(0, map(stepValue[2], 1, 5, 0, 1));
+      qualMixer.gain(0, (stepValue[2] - 1)/5.0);
       qualMixer.gain(1, 1);
     }
     else if (stepValue[2] == 5) {
-      qualMixer.gain(0, 0.5);
-      qualMixer.gain(1, 0.5);
+      qualMixer.gain(0, 0.7);
+      qualMixer.gain(1, 0.7);
     }
     else if (stepValue[2] > 5) {      
       qualMixer.gain(0, 1);
-      qualMixer.gain(1, map(stepValue[2], 5, 9, 1, 0));     
+      qualMixer.gain(1, (-stepValue[2] + 9)/5.0);  
     }
   }
+
+
 
   if (currentMillis - qualNotePreviousMillis >= qualNoteClock) {
     qualNotePreviousMillis = currentMillis;
     if (!qualPlayTone) {
-      // Note On
+      qualSine0Env.noteOn();
+      qualSine1Env.noteOn();
+      qualSine2Env.noteOn();
+      qualSawtooth0Env.noteOn();
+      qualSawtooth1Env.noteOn();
+      qualSawtooth2Env.noteOn();
       qualPlayTone = true;
     }
     else {
-      // Note off
+      qualSine0Env.noteOff();
+      qualSine1Env.noteOff();
+      qualSine2Env.noteOff();
+      qualSawtooth0Env.noteOff();
+      qualSawtooth1Env.noteOff();
+      qualSawtooth2Env.noteOff();  
       qualPlayTone = false;
       messageState++;
     }
