@@ -104,7 +104,7 @@ const int introSequences[][80] = {
     1, 1, 1, 1, 1, 0, // 5
     1, 1, 1, 1, 1, 1, 1, 1, 1, 0, // 9
     1, 1, 0, // 2
-    1, 1, 1, 1, 1, 1, 0 // 6
+    1, 1, 1, 1, 1, 1, 0, // 6
     1, 1, 1, 1, 1, 0, // 5
     1, 1, 1, 0 // 3
   },
@@ -117,7 +117,7 @@ const int introSequences[][80] = {
     1, 1, 1, 1, 1, 0, // 5
     1, 1, 1, 1, 1, 1, 1, 1, 0, // 8
     1, 1, 1, 2, 0, // 13
-    1, 2, 2, 0 // 21
+    1, 2, 2, 0, // 21
     1, 1, 1, 1, 2, 2, 2, 0, // 34
     1, 1, 1, 1, 1, 2, 2, 2, 2, 2, 0 // 55
   }
@@ -141,8 +141,20 @@ boolean formPlayTone = false;
 unsigned long qualNotePreviousMillis = 0;
 unsigned int qualNoteClock = 2000;
 boolean qualPlayTone = false;
-int qualDurFrequencies[] = {262, 330, 392};
-int qualMollFrequencies[] = {196, 233, 294};
+const int qualMollFrequencies[][3] = {
+  {49, 58, 73}, // G1-Moll
+  {73, 87, 104}, // D2-Moll
+  {98, 117, 147}, // G2-Moll
+  {147, 175, 233}, // D3-Moll
+  {196, 233, 294}, // G3-Moll
+};
+const int qualDurFrequencies[][3] = {
+  {131, 167, 196}, // C3-Dur
+  {175, 220, 262}, // F3-Dur
+  {262, 330, 392}, // C4-Dur
+  {349, 440, 523}, // F4-Dur
+  {523, 659, 784}, // C5-Dur
+};
 
 // /////////////// QUANTITY ///////////////
 
@@ -366,7 +378,7 @@ void setup() {
   introEnv.attack(50);
   introEnv.hold(50);
   introEnv.decay(50);
-  introEnv.sustain(50);
+  introEnv.sustain(1);
   introEnv.release(50);
 
   // Reference
@@ -380,22 +392,34 @@ void setup() {
   formEnv.attack(50);
   formEnv.hold(50);
   formEnv.decay(50);
-  formEnv.sustain(50);
+  formEnv.sustain(1);
   formEnv.release(50);
 
   // Quality
-  qualSine0.frequency(qualDurFrequencies[0]);
-  qualSine1.frequency(qualDurFrequencies[1]);
-  qualSine2.frequency(qualDurFrequencies[2]);
-  qualSawtooth0.begin(0.5, qualMollFrequencies[0], WAVEFORM_SAWTOOTH);
-  qualSawtooth1.begin(0.5, qualMollFrequencies[1], WAVEFORM_SAWTOOTH);
-  qualSawtooth2.begin(0.5, qualMollFrequencies[2], WAVEFORM_SAWTOOTH);
+  qualSine0.frequency(qualDurFrequencies[0][0]);
+  qualSine1.frequency(qualDurFrequencies[0][1]);
+  qualSine2.frequency(qualDurFrequencies[0][2]);
+  qualSawtooth0.begin(0.5, qualMollFrequencies[3][0], WAVEFORM_TRIANGLE);
+  qualSawtooth1.begin(0.5, qualMollFrequencies[3][1], WAVEFORM_TRIANGLE);
+  qualSawtooth2.begin(0.5, qualMollFrequencies[3][2], WAVEFORM_TRIANGLE);
   qualSine0Env.attack(1500);
   qualSine1Env.attack(1500);
   qualSine2Env.attack(1500);
   qualSawtooth0Env.attack(1500);
   qualSawtooth1Env.attack(1500);
-  qualSawtooth2Env.attack(1500);
+  qualSawtooth2Env.attack(1500);  
+  qualSine0Env.sustain(1);
+  qualSine1Env.sustain(1);
+  qualSine2Env.sustain(1);
+  qualSawtooth0Env.sustain(1);
+  qualSawtooth1Env.sustain(1);
+  qualSawtooth2Env.sustain(1);
+  qualSine0Env.release(1500);
+  qualSine1Env.release(1500);
+  qualSine2Env.release(1500);
+  qualSawtooth0Env.release(1500);
+  qualSawtooth1Env.release(1500);
+  qualSawtooth2Env.release(1500);
 
   for (int i = 0; i < 3; i++) {
     qualDurMixer.gain(i, 1);
@@ -486,16 +510,22 @@ void loop() {
     if (messageState >= 4) messageState = 1;
   }
   else {
-    introEnv.noteOff();
     masterMixer0.gain(1, 0);
     masterMixer1.gain(1, 0);
+    introEnv.noteOff();
+    introPlayTone = false;
     formEnv.noteOff();
+    referSetPreviousMillis = false;
+    formSetPreviousMillis = false;
     qualSine0Env.noteOff();
     qualSine1Env.noteOff();
     qualSine2Env.noteOff();
     qualSawtooth0Env.noteOff();
     qualSawtooth1Env.noteOff();
     qualSawtooth2Env.noteOff();
+    qualPlayTone = false;      
+    qualMixer.gain(0, 0);
+    qualMixer.gain(1, 0);
   }
 
 }
@@ -712,33 +742,45 @@ void form() {
 // ////////////////////////////// QUALITY //////////////////////////////
 
 void quality() {
-  if (stepValue[2] == 0) messageState++;
-  else {
-    if (stepValue[2] < 5) {
-      qualMixer.gain(0, (stepValue[2] - 1)/5.0);
-      qualMixer.gain(1, 1);
-    }
-    else if (stepValue[2] == 5) {
-      qualMixer.gain(0, 0.7);
-      qualMixer.gain(1, 0.7);
-    }
-    else if (stepValue[2] > 5) {      
-      qualMixer.gain(0, 1);
-      qualMixer.gain(1, (-stepValue[2] + 9)/5.0);  
-    }
-  }
-
-
-
   if (currentMillis - qualNotePreviousMillis >= qualNoteClock) {
     qualNotePreviousMillis = currentMillis;
     if (!qualPlayTone) {
-      qualSine0Env.noteOn();
-      qualSine1Env.noteOn();
-      qualSine2Env.noteOn();
-      qualSawtooth0Env.noteOn();
-      qualSawtooth1Env.noteOn();
-      qualSawtooth2Env.noteOn();
+      if (stepValue[2] < 5) {
+        qualMixer.gain(0, 0);
+        qualMixer.gain(1, 1);
+        qualSawtooth0.frequency(qualMollFrequencies[stepValue[2] - 1][0]);
+        qualSawtooth1.frequency(qualMollFrequencies[stepValue[2] - 1][1]);
+        qualSawtooth2.frequency(qualMollFrequencies[stepValue[2] - 1][2]);
+        qualSawtooth0Env.noteOn();
+        qualSawtooth1Env.noteOn();
+        qualSawtooth2Env.noteOn();
+      }
+      else if (stepValue[2] == 5) {
+        qualMixer.gain(0, 0.7);
+        qualMixer.gain(1, 0.7);
+        qualSawtooth0.frequency(qualMollFrequencies[3][0]);
+        qualSawtooth1.frequency(qualMollFrequencies[3][1]);
+        qualSawtooth2.frequency(qualMollFrequencies[3][2]);
+        qualSine0.frequency(qualDurFrequencies[0][0]);
+        qualSine1.frequency(qualDurFrequencies[0][1]);
+        qualSine2.frequency(qualDurFrequencies[0][2]); 
+        qualSine0Env.noteOn();
+        qualSine1Env.noteOn();
+        qualSine2Env.noteOn();
+        qualSawtooth0Env.noteOn();
+        qualSawtooth1Env.noteOn();
+        qualSawtooth2Env.noteOn();
+      }
+      else if (stepValue[2] > 5) {      
+        qualMixer.gain(0, 1);
+        qualMixer.gain(1, 0);
+        qualSine0.frequency(qualDurFrequencies[stepValue[2] - 6][0]);
+        qualSine1.frequency(qualDurFrequencies[stepValue[2] - 6][1]);
+        qualSine2.frequency(qualDurFrequencies[stepValue[2] - 6][2]); 
+        qualSine0Env.noteOn();
+        qualSine1Env.noteOn();
+        qualSine2Env.noteOn();
+      }
       qualPlayTone = true;
     }
     else {
