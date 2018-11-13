@@ -162,12 +162,11 @@ unsigned long quantNotePreviousMillis = 0;
 unsigned int quantNoteClock = introNoteClock;
 boolean quantPlayTone = false;
 
-
 int quantCounter = 0;
 
 int quantValue = 0;
-int quantValueCounter = 0;
-int quantValueBitCounter = 0;
+String quantValueString;
+
 boolean quantValueSet = false;
 unsigned long quantValuePreviousMillis;
 boolean quantValuePreviousSet = false;
@@ -538,6 +537,7 @@ void resetAll() {
   stepSelected = 0;
   messageState = 0;
   segmentPlayCounter = 0;
+  introDeciCounter = 0;
   quantValue = 0;
   for (int i = 0; i < stepCount; i++) stepValue[i] = 0;
 }
@@ -804,46 +804,55 @@ void quality() {
 // ////////////////////////////// QUANTITY //////////////////////////////
 
 void quantity() {
-  if (currentMillis - quantNotePreviousMillis >= quantNoteClock) {
-    quantNotePreviousMillis = currentMillis;
+	int tmpQuantValueCounter = 0;
+	quantValueString = String(quantValue);
 
+	if (introDeciCounter < 49 && stepValue[0] != 0 && (stepValue[3] == 1 || stepValue[3] == 2 || stepValue[3] == 4 || stepValue[3] == 6)) {
+		if (currentMillis - introNotePreviousMillis >= introNoteClock) {
+		  introNotePreviousMillis = currentMillis;
+		  if (!introPlayTone) {
+		    if (introDeciCounter % 12 == 0 && introDeciCounter != 0) {
+		      introSine.frequency(introDeciFrequencies[int(introDeciCounter/12)]);
+		    }
+		    if (introDeciCounter % 12 != 1) {
+		      introEnv.noteOn();
+		    }
 
+		    introPlayTone = true;
+		  }
+		  else {
+		    introEnv.noteOff();
+		    introPlayTone = false;
+		    introDeciCounter++;
+		  }
+		}
+	}
+	else {
+		if ((stepValue[0] != 0 && (stepValue[3] == 2 || stepValue[3] == 3)) || (stepValue[0] == 0 && stepValue[3] == 1)) {
+			// Distanz
+		}
+		else if ((stepValue[0] != 0 && (stepValue[3] == 4 || stepValue[3] == 5)) || (stepValue[0] == 0 && stepValue[3] == 2)) {
+			// Zeit
+		}
+		else if ((stepValue[0] != 0 && (stepValue[3] == 6 || stepValue[3] == 7)) || (stepValue[0] == 0 && stepValue[3] == 3)) {
+			if (currentMillis - quantNotePreviousMillis >= quantNoteClock) {
+				if (!quantPlayTone) {
+					for (int i = 0; i < quantValueString.length(); i++) {
+						if (quantCounter >= tmpQuantValueCounter) introSine.frequency(introDeciFrequencies[i]);
+						tmpQuantValueCounter += String(quantValueString[i]).toInt();
+					}
 
-
-
-
-
-    if (quantValueBitCounter < 5) {
-      while (bitRead(quantValue - int(quantValue/32) * 32, quantValueBitCounter) == 0) quantValueBitCounter++;
-      // frequency(quantFrequencies[quantValueBitCounter]);
-    }
-    // else frequency(quantFrequencies[5]);
-    
-    if (!quantPlayTone) {
-      // Note on
-      quantPlayTone = true;
-    }
-    else {
-      // Note off
-      quantPlayTone = false;
-      // if (stepValue[3] == 4 || stepValue[3] == 5) // TimeNoteOn
-      if (quantValueBitCounter >= 5) quantValueCounter++;
-      else quantValueBitCounter++;
-    }
-
-    if (quantValueCounter >= int(quantValue/32)) {
-      quantValueBitCounter = 0;
-      quantValueCounter = 0;
-      messageState++;
-    }
-  }
-
-  if (stepValue[3] == 2 || stepValue[3] == 3) {
-    /*
-    if (quantValueCounter % 8 >= 4) map(quantValueCounter % 4, 0, 4, 0, 1);
-    else map(quantValueCounter % 4, 0, 4, 1, 0);
-    */
-  }
+					introEnv.noteOn();
+					quantPlayTone = true;
+					quantCounter++;
+				}
+				else {
+					introEnv.noteOff();
+					quantPlayTone = false;
+				}
+			}
+		}
+	}
 }
 
 // ////////////////////////////// INTERSTELLAR OBJECTS //////////////////////////////

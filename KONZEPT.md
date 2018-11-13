@@ -48,4 +48,4 @@ Mathematische Formeln und Folgen werden als Einführung der Nachricht vorn an ge
 
 ## Nachricht
 
-Wurde eine Einführungsnachricht ausgewählt wird als erstes diese alleine abgespielt. Sobald diese fertig abgespielt ist wird der Bezug/Aussage-Wert wiedergegeben und zu dem wird zeitgleich der Ton des interstellaren Objekts im Hintergrund eingefadet. Anschließend wird der neagtive/positiv Wert abgespielt und ganz zum Schluss schließlich der quantitive Wert. Die Nachricht wird dabei so lange wiederholt bis der Encoder wieder gedrückt wird, allerdings ohne den Einführungswert, der nur am Anfang gespielt wird.
+Wurde eine Einführungsnachricht ausgewählt wird als erstes diese alleine abgespielt. Sobald diese fertig abgespielt ist wird der Bezug/Aussage-Wert wiedergegeben und zu dem wird zeitgleich der Ton des interstellaren Objekts im Hintergrund eingefadet. Anschließend wird der neagtive/positiv Wert abgespielt und ganz zum Schluss schließlich der quantitive Wert. Die Nachricht wird dabei so lange wiederholt bis der Encoder wieder gedrückt wird, allerdings ohne die Einführung, der nur am Anfang gespielt wird.
