@@ -40,7 +40,7 @@ Mathematische Formeln und Folgen werden als Einführung der Nachricht vorn an ge
 	- 2(5) - Zeit
 	- (6 - Einführung Dezimalsystem - Anzahl)
 	- 3(7) - Anzahl<br>Hierüber lassen sich quantitive Aussagen über die Einheiten Zeit, Distanz und Anzahl machen. Man legt dabei zuerst fest was man darstellen möchte und ob eine Einleitunsgsequenz, welche die einzelnen Einheiten und ihre Quantisierung erläutert, abgespielt werden soll. Die Option einer Einleitungssequenz besteht nur wenn diese nicht schon bereits in der Einführung ausgewählt wurde. Im Anschluss kann man die zu sendende Zahl eingeben.<br>
-*Quantität wird über einen einfach Sinuston dargestellt (siehe Einführung). Jeweils die Quadratzahlen bis 32 sind entsprechend ihrer Position 40 Hz tiefer. Distanz wird mittels eines Noise-Generators der im Panorama von rechts nach links wandert dargestellt. Zeit ist ein regelmäßiges, gleichmäßiges Ticken. Eine Anzahl wird entsprechend mit einem einfachen Sinuston dargestellt.*
+*Quantität wird über einen einfach Sinuston dargestellt (siehe Einführung). Distanz wird mittels eines Noise-Generators der im Panorama von rechts nach links wandert dargestellt. Zeit ist ein regelmäßiges, gleichmäßiges Ticken. Eine Anzahl wird entsprechend mit einem einfachen Sinuston dargestellt.*
 - **WERT 5** - Interstellare Objekte<br>
 	- 0 - Kein interstellares Objekt
 	- 1 - Gasplanet (Jupiter)

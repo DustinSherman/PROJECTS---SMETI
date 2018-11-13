@@ -184,8 +184,7 @@ int messageState = 0;
 
 AudioMixer4              masterMixer0;
 AudioMixer4              masterMixer1;
-AudioMixer4              stereoMixerL;
-AudioMixer4              stereoMixerR;
+AudioMixer4              masterMixer;
 AudioOutputI2S           LineOut;
 AudioControlSGTL5000     audioShield;
 
@@ -360,12 +359,10 @@ AudioConnection          patchPlanetMaster(planetMixer, 0, masterMixer1, 1);
 
 // /////////////// MASTER ///////////////
 
-AudioConnection          patchXX00(masterMixer0, 0, stereoMixerL, 0);
-AudioConnection          patchXX01(masterMixer1, 0, stereoMixerL, 1);
-AudioConnection          patchXX02(masterMixer0, 0, stereoMixerR, 0);
-AudioConnection          patchXX03(masterMixer1, 0, stereoMixerR, 1);
-AudioConnection          patchXX04(stereoMixerL, 0, LineOut, 0);
-AudioConnection          patchXX05(stereoMixerR, 0, LineOut, 1);
+AudioConnection          patchXX00(masterMixer0, 0, masterMixer, 0);
+AudioConnection          patchXX01(masterMixer1, 0, masterMixer, 1);
+AudioConnection          patchXX02(masterMixer, 0, LineOut, 0);
+AudioConnection          patchXX03(masterMixer, 0, LineOut, 1);
 
 // ////////////////////////////// PROGRMM ////////////////////////////////////////////////////////////
 
@@ -473,10 +470,6 @@ void setup() {
   planetRockMixer.gain(1, 1);
   planetRockMixer.gain(2, 1);
   planetRockMixer.gain(3, 0.4);
-
-
-  stereoMixerL.gain(0, 0);
-  stereoMixerL.gain(1, 0);
 
   // Encoder
   pinMode(encBtn, INPUT);
