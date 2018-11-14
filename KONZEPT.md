@@ -33,13 +33,9 @@ Mathematische Formeln und Folgen werden als Einführung der Nachricht vorn an ge
 	- 6-9 - Neutral Positiv bis Sehr positiv <br>Man kann mit Hilfe dieses Parameters bestimmen ob eine Aussage oder Frage eine negative oder positive Eigenschaft beifügen. Zu dem lassen sich damit Fragen beantworten sofern dies vom Fragekontext möglich ist. Die einstellbare Skala geht dabei von 1 (sehr negativ) über 4/5 (neutral) bis hin zu 9 (sehr positiv).<br>*Der erzeugte Ton ist eine Mischung aus einer Dur-Sinuswelle für postive Aspekte und einem Moll-Dreieckwelle für negative Aspekte die jeweils in ihrer Tonhöhe angepasst werden.*
 - **WERT 4** 
  	- 0 - Keine quantitative Aussage
-	- (1 - Einführung Dezimalsystem)
-	- (2 - Einführung Dezimalsystem - Distanz)
-	- 1(3) - Distanz
-	- (4 - Einführung Dezimalsystem - Zeit)
-	- 2(5) - Zeit
-	- (6 - Einführung Dezimalsystem - Anzahl)
-	- 3(7) - Anzahl<br>Hierüber lassen sich quantitive Aussagen über die Einheiten Zeit, Distanz und Anzahl machen. Man legt dabei zuerst fest was man darstellen möchte und ob eine Einleitunsgsequenz, welche die einzelnen Einheiten und ihre Quantisierung erläutert, abgespielt werden soll. Die Option einer Einleitungssequenz besteht nur wenn diese nicht schon bereits in der Einführung ausgewählt wurde. Im Anschluss kann man die zu sendende Zahl eingeben.<br>
+	- 1 - Distanz
+	- 2 - Zeit
+	- 3 - Anzahl<br>Hierüber lassen sich quantitive Aussagen über die Einheiten Zeit, Distanz und Anzahl machen. Man legt dabei zuerst fest was man darstellen möchte und im Anschluss die zu sendende Zahl.<br>
 *Quantität wird über einen einfach Sinuston dargestellt (siehe Einführung). Distanz wird mittels eines Noise-Generators der im Panorama von rechts nach links wandert dargestellt. Zeit ist ein regelmäßiges, gleichmäßiges Ticken. Eine Anzahl wird entsprechend mit einem einfachen Sinuston dargestellt.*
 - **WERT 5** - Interstellare Objekte<br>
 	- 0 - Kein interstellares Objekt
