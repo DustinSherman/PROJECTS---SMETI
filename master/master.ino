@@ -162,9 +162,14 @@ unsigned long quantNotePreviousMillis = 0;
 unsigned int quantNoteClock = introNoteClock;
 boolean quantPlayTone = false;
 
+boolean quantIntroPlayed = false;
+int quantIntroTimeCounter = 0;
+int quantIntroTimeFrequencies[] = {70, 30};
+
 int quantCounter = 0;
 
-int quantValue = 0;
+int quantValue = 1;
+int tmpQuantValueCounter = 0;
 String quantValueString;
 
 boolean quantValueSet = false;
@@ -430,6 +435,10 @@ void setup() {
   qualMixer.gain(0, 1);
   qualMixer.gain(1, 1);
 
+  // Quantity
+  quantTimeDrum.frequency(quantIntroTimeFrequencies[0]);
+  quantTimeDrum.length(20);
+
   // Gasplanet (Jupiter)
   planetGasNoise.amplitude(0.5);
   planetGasChorus.begin(delayline, CHORUS_DELAY_LENGTH, 8);
@@ -470,6 +479,9 @@ void setup() {
   planetRockMixer.gain(2, 1);
   planetRockMixer.gain(3, 0.4);
 
+  masterMixer0.gain(1, 0);
+  masterMixer1.gain(1, 0);
+
   // Encoder
   pinMode(encBtn, INPUT);
   // Activate internal pull-up (optional) 
@@ -509,36 +521,42 @@ void loop() {
         else messageState++;
       }
     }
-    if (messageState >= 4) messageState = 1;
+    if (messageState >= 4) {
+      resetAllCounters();
+      messageState = 0;
+    }
   }
-  else {
-    masterMixer0.gain(1, 0);
-    masterMixer1.gain(1, 0);
-    introEnv.noteOff();
-    introPlayTone = false;
-    formEnv.noteOff();
-    referSetPreviousMillis = false;
-    formSetPreviousMillis = false;
-    qualSine0Env.noteOff();
-    qualSine1Env.noteOff();
-    qualSine2Env.noteOff();
-    qualSawtooth0Env.noteOff();
-    qualSawtooth1Env.noteOff();
-    qualSawtooth2Env.noteOff();
-    qualPlayTone = false;      
-    qualMixer.gain(0, 0);
-    qualMixer.gain(1, 0);
-  }
+}
 
+void resetAllCounters() {
+  segmentPlayCounter = 0;
+  introDeciCounter = 0;
+  quantIntroTimeCounter = 0;
+  quantCounter = 0;
 }
 
 void resetAll() {
-  messagePlay = false;
+  introEnv.noteOff();
+  introPlayTone = false;
+  introSine.frequency(introDeciFrequencies[0]);
+  formEnv.noteOff();
+  referSetPreviousMillis = false;
+  formSetPreviousMillis = false;
+  qualSine0Env.noteOff();
+  qualSine1Env.noteOff();
+  qualSine2Env.noteOff();
+  qualSawtooth0Env.noteOff();
+  qualSawtooth1Env.noteOff();
+  qualSawtooth2Env.noteOff();
+  qualPlayTone = false;      
+  qualMixer.gain(0, 0);
+  qualMixer.gain(1, 0);
+
   stepSelected = 0;
   messageState = 0;
-  segmentPlayCounter = 0;
-  introDeciCounter = 0;
-  quantValue = 0;
+  messagePlay = false;
+  quantValue = 1;
+  quantIntroPlayed = false;
   for (int i = 0; i < stepCount; i++) stepValue[i] = 0;
 }
 
@@ -587,7 +605,7 @@ void encoder() {
     }
     else {
       if (quantValue > 99999) quantValue = 99999;
-      else if (quantValue < 0) quantValue = 0;
+      else if (quantValue < 1) quantValue = 1;
     }
   }
 
@@ -609,6 +627,7 @@ void encoder() {
       else {
         messagePlay = false;
         resetAll();
+        resetAllCounters();
       }
     }
   }
@@ -650,14 +669,14 @@ void shiftregister() {
 // ////////////////////////////// INTRODUCTION //////////////////////////////
 
 void introduction() {
-  if (introDeciCounter < 49) {
+  if (introDeciCounter < 51) {
     if (currentMillis - introNotePreviousMillis >= introNoteClock) {
       introNotePreviousMillis = currentMillis;
       if (!introPlayTone) {
         if (introDeciCounter % 12 == 0 && introDeciCounter != 0) {
           introSine.frequency(introDeciFrequencies[int(introDeciCounter/12)]);
         }
-        if (introDeciCounter % 12 != 1) {
+        if (introDeciCounter % 12 != 1 && introDeciCounter < 49) {
           introEnv.noteOn();
         }
 
@@ -804,17 +823,17 @@ void quality() {
 // ////////////////////////////// QUANTITY //////////////////////////////
 
 void quantity() {
-	int tmpQuantValueCounter = 0;
 	quantValueString = String(quantValue);
 
-	if (introDeciCounter < 49 && stepValue[0] != 0 && (stepValue[3] == 1 || stepValue[3] == 2 || stepValue[3] == 4 || stepValue[3] == 6)) {
+	if (introDeciCounter < 51 && stepValue[0] == 0 && (stepValue[3] == 1 || stepValue[3] == 2 || stepValue[3] == 4 || stepValue[3] == 6)) {
 		if (currentMillis - introNotePreviousMillis >= introNoteClock) {
+      
 		  introNotePreviousMillis = currentMillis;
 		  if (!introPlayTone) {
 		    if (introDeciCounter % 12 == 0 && introDeciCounter != 0) {
 		      introSine.frequency(introDeciFrequencies[int(introDeciCounter/12)]);
 		    }
-		    if (introDeciCounter % 12 != 1) {
+		    if (introDeciCounter % 12 != 1 && introDeciCounter < 49) {
 		      introEnv.noteOn();
 		    }
 
@@ -828,17 +847,36 @@ void quantity() {
 		}
 	}
 	else {
-		if ((stepValue[0] != 0 && (stepValue[3] == 2 || stepValue[3] == 3)) || (stepValue[0] == 0 && stepValue[3] == 1)) {
-			// Distanz
-		}
-		else if ((stepValue[0] != 0 && (stepValue[3] == 4 || stepValue[3] == 5)) || (stepValue[0] == 0 && stepValue[3] == 2)) {
-			// Zeit
-		}
-		else if ((stepValue[0] != 0 && (stepValue[3] == 6 || stepValue[3] == 7)) || (stepValue[0] == 0 && stepValue[3] == 3)) {
+    if (!quantIntroPlayed) {
+  		if ((stepValue[0] == 0 && (stepValue[3] == 2 || stepValue[3] == 3)) || (stepValue[0] =! 0 && stepValue[3] == 1)) {
+  			// Distanz
+  		}
+  		else if ((stepValue[0] == 0 && (stepValue[3] == 4 || stepValue[3] == 5)) || (stepValue[0] =! 0 && stepValue[3] == 2)) {
+  			if (currentMillis - quantNotePreviousMillis >= quantNoteClock * 2) {
+          quantNotePreviousMillis = currentMillis;
+          quantTimeDrum.frequency(quantIntroTimeFrequencies[quantIntroTimeCounter % 2]);
+          if (quantIntroTimeCounter < 8) quantTimeDrum.noteOn();
+          quantIntroTimeCounter++;
+          if (quantIntroTimeCounter >= 9) quantIntroPlayed = true;
+        }
+  		}
+      else if ((stepValue[0] == 0 && (stepValue[3] == 6 || stepValue[3] == 7)) || (stepValue[0] =! 0 && stepValue[3] == 3)) quantIntroPlayed = true;
+    }
+
+		else {
+
 			if (currentMillis - quantNotePreviousMillis >= quantNoteClock) {
+        quantNotePreviousMillis = currentMillis;
+
+        Serial.println(quantCounter);
+        Serial.println(quantValue);
+
 				if (!quantPlayTone) {
-					for (int i = 0; i < quantValueString.length(); i++) {
-						if (quantCounter >= tmpQuantValueCounter) introSine.frequency(introDeciFrequencies[i]);
+          tmpQuantValueCounter = 0;
+					for (int i = quantValueString.length() - 1; i >= 0; i--) {
+						if (quantCounter >= tmpQuantValueCounter) {
+              introSine.frequency(introDeciFrequencies[-i + quantValueString.length() - 1]);
+            }
 						tmpQuantValueCounter += String(quantValueString[i]).toInt();
 					}
 
@@ -849,10 +887,24 @@ void quantity() {
 				else {
 					introEnv.noteOff();
 					quantPlayTone = false;
+          if (quantCounter >= getCrossSum(quantValue)) {
+            messageState++;
+            quantIntroPlayed = false;
+          }
 				}
 			}
+
 		}
 	}
+}
+
+int getCrossSum(int value) {
+  String tmpValueString = String(value);
+  int result = 0;
+  for (int i = 0; i < tmpValueString.length(); i++) {
+    result += String(tmpValueString[i]).toInt();
+  }
+  return result;
 }
 
 // ////////////////////////////// INTERSTELLAR OBJECTS //////////////////////////////
