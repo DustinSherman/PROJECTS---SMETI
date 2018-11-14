@@ -189,6 +189,8 @@ int messageState = 0;
 AudioMixer4              masterMixer0;
 AudioMixer4              masterMixer1;
 AudioMixer4              masterMixer;
+AudioMixer4              stereoMixerL;
+AudioMixer4              stereoMixerR;
 AudioOutputI2S           LineOut;
 AudioControlSGTL5000     audioShield;
 
@@ -258,10 +260,17 @@ AudioConnection         patchQual14(qualMixer, 0, masterMixer0, 3);
 // /////////////// QUANTITY ///////////////
 
 AudioSynthSimpleDrum    quantTimeDrum;
-AudioSynthKarplusStrong quantTimeString;
+
+AudioSynthNoiseWhite    quantDistanceNoise;        
+AudioEffectFlange       quantDistanceFlanger; 
+
+AudioMixer4             quantMixer;
 
 // Patches
-AudioConnection         patchQuant00(quantTimeDrum, 0, masterMixer1, 0);
+AudioConnection         patchQuant00(quantTimeDrum, 0, quantMixer, 0);
+AudioConnection         patchQuant01(quantDistanceNoise, quantDistanceFlanger);
+AudioConnection         patchQuant02(quantDistanceFlanger, 0, quantMixer, 1);
+AudioConnection         patchQuant03(quantMixer, 0, masterMixer1, 0);
 
 // /////////////// INTERSTELAR OBJECTS ///////////////
 
@@ -365,8 +374,10 @@ AudioConnection          patchPlanetMaster(planetMixer, 0, masterMixer1, 1);
 
 AudioConnection          patchXX00(masterMixer0, 0, masterMixer, 0);
 AudioConnection          patchXX01(masterMixer1, 0, masterMixer, 1);
-AudioConnection          patchXX02(masterMixer, 0, LineOut, 0);
-AudioConnection          patchXX03(masterMixer, 0, LineOut, 1);
+AudioConnection          patchXX02(masterMixer, 0, stereoMixerL, 0);
+AudioConnection          patchXX03(masterMixer, 0, stereoMixerR, 0);
+AudioConnection          patchXX04(stereoMixerL, 0, LineOut, 0);
+AudioConnection          patchXX05(stereoMixerR, 0, LineOut, 1);
 
 // ////////////////////////////// PROGRMM ////////////////////////////////////////////////////////////
 
