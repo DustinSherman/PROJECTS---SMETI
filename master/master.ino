@@ -51,7 +51,7 @@ int segmentPlayCounter = 0;
 int segmentPlayMax = 3;
 
 // stepValue
-int stepValueMax[] = {4, 8, 9, 7, 2};
+int stepValueMax[] = {4, 8, 9, 3, 2};
 // Steps
 int stepSelected = 0;
 const int stepCount = 5;
@@ -588,9 +588,6 @@ void encoder() {
     long encNew;
     encNew = enc.read()/4;
 
-    if (stepValue[0] != 0) stepValueMax[3] = 3;
-    else stepValueMax[3] = 7;
-
     if (encNew != encPos) {
       if (quantValueSet) {
         if (currentMillis - quantValuePreviousMillis <= quantValueSetTiming[1]) quantValue = quantValue + 100 * (encPos - encNew);
@@ -836,76 +833,53 @@ void quality() {
 void quantity() {
 	quantValueString = String(quantValue);
 
-	if (introDeciCounter < 51 && stepValue[0] == 0 && (stepValue[3] == 1 || stepValue[3] == 2 || stepValue[3] == 4 || stepValue[3] == 6)) {
-		if (currentMillis - introNotePreviousMillis >= introNoteClock) {
-      
-		  introNotePreviousMillis = currentMillis;
-		  if (!introPlayTone) {
-		    if (introDeciCounter % 12 == 0 && introDeciCounter != 0) {
-		      introSine.frequency(introDeciFrequencies[int(introDeciCounter/12)]);
-		    }
-		    if (introDeciCounter % 12 != 1 && introDeciCounter < 49) {
-		      introEnv.noteOn();
-		    }
-
-		    introPlayTone = true;
-		  }
-		  else {
-		    introEnv.noteOff();
-		    introPlayTone = false;
-		    introDeciCounter++;
-		  }
+  if (!quantIntroPlayed) {
+		if (stepValue[3] == 1) {
+			// Distanz
 		}
-	}
-	else {
-    if (!quantIntroPlayed) {
-  		if ((stepValue[0] == 0 && (stepValue[3] == 2 || stepValue[3] == 3)) || (stepValue[0] =! 0 && stepValue[3] == 1)) {
-  			// Distanz
-  		}
-  		else if ((stepValue[0] == 0 && (stepValue[3] == 4 || stepValue[3] == 5)) || (stepValue[0] =! 0 && stepValue[3] == 2)) {
-  			if (currentMillis - quantNotePreviousMillis >= quantNoteClock * 2) {
-          quantNotePreviousMillis = currentMillis;
-          quantTimeDrum.frequency(quantIntroTimeFrequencies[quantIntroTimeCounter % 2]);
-          if (quantIntroTimeCounter < 8) quantTimeDrum.noteOn();
-          quantIntroTimeCounter++;
-          if (quantIntroTimeCounter >= 9) quantIntroPlayed = true;
-        }
-  		}
-      else if ((stepValue[0] == 0 && (stepValue[3] == 6 || stepValue[3] == 7)) || (stepValue[0] =! 0 && stepValue[3] == 3)) quantIntroPlayed = true;
-    }
-
-		else {
-
-			if (currentMillis - quantNotePreviousMillis >= quantNoteClock) {
+		else if (stepValue[3] == 2) {
+			if (currentMillis - quantNotePreviousMillis >= quantNoteClock * 2) {
         quantNotePreviousMillis = currentMillis;
-
-        Serial.println(quantCounter);
-        Serial.println(quantValue);
-
-				if (!quantPlayTone) {
-          tmpQuantValueCounter = 0;
-					for (int i = quantValueString.length() - 1; i >= 0; i--) {
-						if (quantCounter >= tmpQuantValueCounter) {
-              introSine.frequency(introDeciFrequencies[-i + quantValueString.length() - 1]);
-            }
-						tmpQuantValueCounter += String(quantValueString[i]).toInt();
-					}
-
-					introEnv.noteOn();
-					quantPlayTone = true;
-					quantCounter++;
-				}
-				else {
-					introEnv.noteOff();
-					quantPlayTone = false;
-          if (quantCounter >= getCrossSum(quantValue)) {
-            messageState++;
-            quantIntroPlayed = false;
-          }
-				}
-			}
-
+        quantTimeDrum.frequency(quantIntroTimeFrequencies[quantIntroTimeCounter % 2]);
+        if (quantIntroTimeCounter < 8) quantTimeDrum.noteOn();
+        quantIntroTimeCounter++;
+        if (quantIntroTimeCounter >= 9) quantIntroPlayed = true;
+      }
 		}
+    else if (stepValue[3] == 3) quantIntroPlayed = true;
+  }
+
+	else {
+
+		if (currentMillis - quantNotePreviousMillis >= quantNoteClock) {
+      quantNotePreviousMillis = currentMillis;
+
+      Serial.println(quantCounter);
+      Serial.println(quantValue);
+
+			if (!quantPlayTone) {
+        tmpQuantValueCounter = 0;
+				for (int i = quantValueString.length() - 1; i >= 0; i--) {
+					if (quantCounter >= tmpQuantValueCounter) {
+            introSine.frequency(introDeciFrequencies[-i + quantValueString.length() - 1]);
+          }
+					tmpQuantValueCounter += String(quantValueString[i]).toInt();
+				}
+
+				introEnv.noteOn();
+				quantPlayTone = true;
+				quantCounter++;
+			}
+			else {
+				introEnv.noteOff();
+				quantPlayTone = false;
+        if (quantCounter >= getCrossSum(quantValue)) {
+          messageState++;
+          quantIntroPlayed = false;
+        }
+			}
+		}
+
 	}
 }
 
