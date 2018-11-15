@@ -51,7 +51,7 @@ int segmentPlayCounter = 0;
 int segmentPlayMax = 3;
 
 // stepValue
-int stepValueMax[] = {4, 8, 9, 3, 3};
+int stepValueMax[] = {4, 8, 9, 3, 4};
 // Steps
 int stepSelected = 0;
 const int stepCount = 5;
@@ -389,6 +389,20 @@ AudioConnection          patchStarYellowDwarf01(starYelloDwarfBitcrusher, 0, sta
 AudioConnection          patchStarYellowDwarf02(starYellowDwarfSine, 0, starYellowDwarfMixer, 1);
 AudioConnection          patchStarYellowDwarf03(starYellowDwarfMixer, 0, planetMixer, 2);
 
+// Star (red dwarf)
+int starRedDwarfWaveformFreq = 45;
+
+AudioSynthNoisePink      starRedDwarfNoise;
+AudioFilterStateVariable starRedDwarfNoiseFilter;
+AudioSynthWaveform       starRedDwarfWaveform;
+AudioMixer4              starRedDwarfMixer;
+
+// Patches
+AudioConnection          patchStarRedDwarf00(starRedDwarfNoise, starRedDwarfNoiseFilter);
+AudioConnection          patchStarRedDwarf01(starRedDwarfNoiseFilter, 0, starRedDwarfMixer, 0);
+AudioConnection          patchStarRedDwarf02(starRedDwarfWaveform, 0, starRedDwarfMixer, 1);
+AudioConnection          patchStarRedDwarf03(starRedDwarfMixer, 0, planetMixer, 3);
+
 // PlanteMixer
 AudioConnection          patchPlanetMaster(planetMixer, 0, masterMixer1, 1);
 
@@ -523,7 +537,11 @@ void setup() {
   starYelloDwarfBitcrusher.bits(starYelloDwarfBitcrusherBits);
   starYelloDwarfBitcrusher.bits(starYelloDwarfBitcrusherSampleRate);
 
-
+  // Star (Red Dwarf)
+  starRedDwarfNoise.amplitude(0.09);
+  starRedDwarfNoiseFilter.frequency(1200);
+  starRedDwarfNoiseFilter.resonance(1.4);
+  starRedDwarfWaveform.begin(0.7, starRedDwarfWaveformFreq, WAVEFORM_PULSE);
 
   masterMixer0.gain(1, 0);
   masterMixer1.gain(1, 0);
@@ -970,24 +988,45 @@ void interstellarObject() {
   if (stepValue[4] == 0) masterMixer1.gain(1, 0);
   else masterMixer1.gain(1, 1);
 
+  for (int i = 1; i <= stepValueMax[4]; i++) {
+    if (stepValue[4] == i) {
+      for (int j = 0; j < 4; j++) {
+        if (j == i - 1) planetMixer.gain(j, 0.6);
+        else planetMixer.gain(j, 0);
+      }
+    }
+  }
+
+  /*
   if (stepValue[4] == 1) {
     planetGas();
     planetMixer.gain(0, 1);
     planetMixer.gain(1, 0);
-    planetMixer.gain(2, 0);    
+    planetMixer.gain(2, 0);
+    planetMixer.gain(3, 0);
   }
   else if (stepValue[4] == 2) {
     planetRock();
     planetMixer.gain(0, 0);
     planetMixer.gain(1, 1);
-    planetMixer.gain(2, 0); 
+    planetMixer.gain(2, 0);
+    planetMixer.gain(3, 0); 
   }
   else if (stepValue[4] == 3) {
     starYelloDwarf();
     planetMixer.gain(0, 0);
     planetMixer.gain(1, 0);
-    planetMixer.gain(2, 1); 
+    planetMixer.gain(2, 1);
+    planetMixer.gain(3, 0); 
   }
+    else if (stepValue[4] == 4) {
+    starYelloDwarf();
+    planetMixer.gain(0, 0);
+    planetMixer.gain(1, 0);
+    planetMixer.gain(2, 0);
+    planetMixer.gain(3, 1); 
+  }
+  */
 }
 
 float pulse(int intervalTime, float pulseMin, float pulseMax) {
