@@ -141,6 +141,7 @@ boolean formPlayTone = false;
 unsigned long qualNotePreviousMillis = 0;
 unsigned int qualNoteClock = 2000;
 boolean qualPlayTone = false;
+boolean qualTimeSet = false;
 const int qualMollFrequencies[][3] = {
   {49, 58, 73}, // G1-Moll
   {73, 87, 104}, // D2-Moll
@@ -166,7 +167,7 @@ boolean quantIntroPlayed = false;
 
 boolean quantDistanceTimeSet = false;
 unsigned int quantDistanceTime = quantNoteClock * 8;
-int quantDistanceSineFrequencies[] = {10, 7};
+int distanceLFOFrequencies[] = {10, 7};
 
 int quantIntroTimeCounter = 0;
 int quantIntroTimeFrequencies[] = {70, 30};
@@ -194,8 +195,6 @@ int messageState = 0;
 AudioMixer4              masterMixer0;
 AudioMixer4              masterMixer1;
 AudioMixer4              masterMixer;
-AudioMixer4              stereoMixerL;
-AudioMixer4              stereoMixerR;
 AudioOutputI2S           LineOut;
 AudioControlSGTL5000     audioShield;
 
@@ -211,12 +210,16 @@ AudioConnection         patchIntro01(introEnv, 0, masterMixer0, 0);
 
 AudioSynthNoiseWhite    referNoise;
 AudioFilterStateVariable referFilter;
+AudioSynthWaveformSine  referLFO;
+AudioEffectMultiply     referMultiply;
 AudioSynthWaveformSine   formSine;
 AudioEffectEnvelope      formEnv;
 
 // Patches
-AudioConnection         patchWho00(referNoise, referFilter);
-AudioConnection         patchWho01(referFilter, 1, masterMixer0, 1);
+AudioConnection         patchRefer00(referNoise, 0, referMultiply, 0);
+AudioConnection         patchRefer01(referLFO, 0, referMultiply, 1);
+AudioConnection         patchRefer02(referMultiply, referFilter);
+AudioConnection         patchRefer03(referFilter, 1, masterMixer0, 1);
 AudioConnection         patchForm00(formSine, formEnv);
 AudioConnection         patchForm01(formEnv, 0, masterMixer0, 2);
 
@@ -266,20 +269,20 @@ AudioConnection         patchQual14(qualMixer, 0, masterMixer0, 3);
 
 AudioSynthSimpleDrum    quantTimeDrum;
 
-AudioSynthNoiseWhite    quantDistanceNoise;  
-AudioSynthWaveformSine  quantDistanceSine;
+AudioSynthNoiseWhite    quantDistanceNoise;
+AudioSynthWaveformSine  quantDistanceLFO;
 AudioEffectMultiply     quantDistanceMultiply;
-AudioEffectFlange       quantDistanceFlanger; 
+AudioFilterStateVariable quantDistanceFilter;
 
 AudioMixer4             quantMixer;
 
 // Patches
 AudioConnection         patchQuant00(quantTimeDrum, 0, quantMixer, 0);
-// AudioConnection         patchQuant01(quantDistanceNoise, quantDistanceFlanger);
 AudioConnection         patchQuant01(quantDistanceNoise, 0, quantDistanceMultiply, 0);
-AudioConnection         patchQuant02(quantDistanceSine, 0, quantDistanceMultiply, 1);
-AudioConnection         patchQuant03(quantDistanceMultiply, 0, quantMixer, 1);
-AudioConnection         patchQuant04(quantMixer, 0, masterMixer1, 0);
+AudioConnection         patchQuant02(quantDistanceLFO, 0, quantDistanceMultiply, 1);
+AudioConnection         patchQuant03(quantDistanceMultiply, quantDistanceFilter);
+AudioConnection         patchQuant04(quantDistanceFilter, 0, quantMixer, 1);
+AudioConnection         patchQuant05(quantMixer, 0, masterMixer1, 0);
 
 // /////////////// INTERSTELAR OBJECTS ///////////////
 
@@ -383,10 +386,8 @@ AudioConnection          patchPlanetMaster(planetMixer, 0, masterMixer1, 1);
 
 AudioConnection          patchXX00(masterMixer0, 0, masterMixer, 0);
 AudioConnection          patchXX01(masterMixer1, 0, masterMixer, 1);
-AudioConnection          patchXX02(masterMixer, 0, stereoMixerL, 0);
-AudioConnection          patchXX03(masterMixer, 0, stereoMixerR, 0);
-AudioConnection          patchXX04(stereoMixerL, 0, LineOut, 0);
-AudioConnection          patchXX05(stereoMixerR, 0, LineOut, 1);
+AudioConnection          patchXX04(masterMixer, 0, LineOut, 0);
+AudioConnection          patchXX05(masterMixer, 0, LineOut, 1);
 
 // ////////////////////////////// PROGRMM ////////////////////////////////////////////////////////////
 
@@ -410,6 +411,7 @@ void setup() {
 
   // Reference
   referNoise.amplitude(0.8);
+  referLFO.frequency(distanceLFOFrequencies[0]);
   referFilter.frequency(600);
   referFilter.resonance(7);
   masterMixer0.gain(1, 0);
@@ -441,12 +443,12 @@ void setup() {
   qualSawtooth0Env.sustain(1);
   qualSawtooth1Env.sustain(1);
   qualSawtooth2Env.sustain(1);
-  qualSine0Env.release(1500);
-  qualSine1Env.release(1500);
-  qualSine2Env.release(1500);
-  qualSawtooth0Env.release(1500);
-  qualSawtooth1Env.release(1500);
-  qualSawtooth2Env.release(1500);
+  qualSine0Env.release(500);
+  qualSine1Env.release(500);
+  qualSine2Env.release(500);
+  qualSawtooth0Env.release(500);
+  qualSawtooth1Env.release(500);
+  qualSawtooth2Env.release(500);
 
   for (int i = 0; i < 3; i++) {
     qualDurMixer.gain(i, 1);
@@ -459,7 +461,9 @@ void setup() {
   quantTimeDrum.frequency(quantIntroTimeFrequencies[0]);
   quantTimeDrum.length(20);
   quantDistanceNoise.amplitude(0.3);
-  quantDistanceSine.frequency(16);
+  quantDistanceLFO.frequency(distanceLFOFrequencies[0]);
+  quantDistanceFilter.frequency(600);
+  quantDistanceFilter.resonance(7);
   quantMixer.gain(1, 0);
 
   // Gasplanet (Jupiter)
@@ -521,6 +525,8 @@ void setup() {
 void loop() {
   currentMillis = millis();
 
+  AudioInterrupts();
+
   encoder();
   shiftregister();  
 
@@ -580,6 +586,8 @@ void resetAll() {
   messagePlay = false;
   quantValue = 1;
   quantIntroPlayed = false;
+  masterMixer0.gain(1, 0);
+  masterMixer1.gain(1, 0);
   for (int i = 0; i < stepCount; i++) stepValue[i] = 0;
 }
 
@@ -750,13 +758,23 @@ void reference() {
   }
 
   if (stepValue[1] == 1 || stepValue[1] == 5 || stepValue[1] == 6) {
+    referLFO.frequency(distanceLFOFrequencies[0]);
     masterMixer0.gain(1, map(currentMillis - referPreviousMillis, 0, referenceTime, 0, 1000)/1000.0);
   }
   else if (stepValue[1] == 2 || stepValue[1] == 7 || stepValue[1] == 8) {
+    referLFO.frequency(distanceLFOFrequencies[1]);
     masterMixer0.gain(1, map(currentMillis - referPreviousMillis, 0, referenceTime, 1000, 0)/1000.0);
   }
 
   if (currentMillis - referPreviousMillis >= referenceTime) {
+    if (stepValue[1] < 5) {
+      masterMixer0.gain(1, 0);
+    }
+  }
+
+  AudioNoInterrupts();
+
+  if (currentMillis - referPreviousMillis >= referenceTime * 2) {
     if (stepValue[1] < 5) messageState++;
     referSetPreviousMillis = false;
   }
@@ -778,6 +796,12 @@ void form() {
 
   if (currentMillis - formPreviousMillis >= formTime) {
     formEnv.noteOff();
+    masterMixer0.gain(1, 0);
+  }
+
+  AudioNoInterrupts();
+
+  if (currentMillis - formPreviousMillis >= formTime * 2) {
     formSetPreviousMillis = false;
     messageState++;
   }
@@ -786,57 +810,64 @@ void form() {
 // ////////////////////////////// QUALITY //////////////////////////////
 
 void quality() {
-  if (currentMillis - qualNotePreviousMillis >= qualNoteClock) {
+  if (!qualTimeSet) {
     qualNotePreviousMillis = currentMillis;
-    if (!qualPlayTone) {
-      if (stepValue[2] < 5) {
-        qualMixer.gain(0, 0);
-        qualMixer.gain(1, 1);
-        qualSawtooth0.frequency(qualMollFrequencies[stepValue[2] - 1][0]);
-        qualSawtooth1.frequency(qualMollFrequencies[stepValue[2] - 1][1]);
-        qualSawtooth2.frequency(qualMollFrequencies[stepValue[2] - 1][2]);
-        qualSawtooth0Env.noteOn();
-        qualSawtooth1Env.noteOn();
-        qualSawtooth2Env.noteOn();
-      }
-      else if (stepValue[2] == 5) {
-        qualMixer.gain(0, 0.7);
-        qualMixer.gain(1, 0.7);
-        qualSawtooth0.frequency(qualMollFrequencies[3][0]);
-        qualSawtooth1.frequency(qualMollFrequencies[3][1]);
-        qualSawtooth2.frequency(qualMollFrequencies[3][2]);
-        qualSine0.frequency(qualDurFrequencies[0][0]);
-        qualSine1.frequency(qualDurFrequencies[0][1]);
-        qualSine2.frequency(qualDurFrequencies[0][2]); 
-        qualSine0Env.noteOn();
-        qualSine1Env.noteOn();
-        qualSine2Env.noteOn();
-        qualSawtooth0Env.noteOn();
-        qualSawtooth1Env.noteOn();
-        qualSawtooth2Env.noteOn();
-      }
-      else if (stepValue[2] > 5) {      
-        qualMixer.gain(0, 1);
-        qualMixer.gain(1, 0);
-        qualSine0.frequency(qualDurFrequencies[stepValue[2] - 6][0]);
-        qualSine1.frequency(qualDurFrequencies[stepValue[2] - 6][1]);
-        qualSine2.frequency(qualDurFrequencies[stepValue[2] - 6][2]); 
-        qualSine0Env.noteOn();
-        qualSine1Env.noteOn();
-        qualSine2Env.noteOn();
-      }
-      qualPlayTone = true;
+    qualTimeSet = true;
+  }
+
+  if (!qualPlayTone) {
+    if (stepValue[2] < 5) {
+      qualMixer.gain(0, 0);
+      qualMixer.gain(1, 1);
+      qualSawtooth0.frequency(qualMollFrequencies[stepValue[2] - 1][0]);
+      qualSawtooth1.frequency(qualMollFrequencies[stepValue[2] - 1][1]);
+      qualSawtooth2.frequency(qualMollFrequencies[stepValue[2] - 1][2]);
+      qualSawtooth0Env.noteOn();
+      qualSawtooth1Env.noteOn();
+      qualSawtooth2Env.noteOn();
     }
-    else {
-      qualSine0Env.noteOff();
-      qualSine1Env.noteOff();
-      qualSine2Env.noteOff();
-      qualSawtooth0Env.noteOff();
-      qualSawtooth1Env.noteOff();
-      qualSawtooth2Env.noteOff();  
-      qualPlayTone = false;
-      messageState++;
+    else if (stepValue[2] == 5) {
+      qualMixer.gain(0, 0.7);
+      qualMixer.gain(1, 0.7);
+      qualSawtooth0.frequency(qualMollFrequencies[3][0]);
+      qualSawtooth1.frequency(qualMollFrequencies[3][1]);
+      qualSawtooth2.frequency(qualMollFrequencies[3][2]);
+      qualSine0.frequency(qualDurFrequencies[0][0]);
+      qualSine1.frequency(qualDurFrequencies[0][1]);
+      qualSine2.frequency(qualDurFrequencies[0][2]); 
+      qualSine0Env.noteOn();
+      qualSine1Env.noteOn();
+      qualSine2Env.noteOn();
+      qualSawtooth0Env.noteOn();
+      qualSawtooth1Env.noteOn();
+      qualSawtooth2Env.noteOn();
     }
+    else if (stepValue[2] > 5) {      
+      qualMixer.gain(0, 1);
+      qualMixer.gain(1, 0);
+      qualSine0.frequency(qualDurFrequencies[stepValue[2] - 6][0]);
+      qualSine1.frequency(qualDurFrequencies[stepValue[2] - 6][1]);
+      qualSine2.frequency(qualDurFrequencies[stepValue[2] - 6][2]); 
+      qualSine0Env.noteOn();
+      qualSine1Env.noteOn();
+      qualSine2Env.noteOn();
+    }
+    qualPlayTone = true;
+  }
+
+  if (currentMillis - qualNotePreviousMillis >= qualNoteClock) {
+    qualSine0Env.noteOff();
+    qualSine1Env.noteOff();
+    qualSine2Env.noteOff();
+    qualSawtooth0Env.noteOff();
+    qualSawtooth1Env.noteOff();
+    qualSawtooth2Env.noteOff();
+  }
+
+  if (currentMillis - qualNotePreviousMillis >= qualNoteClock * 2) {
+    qualTimeSet = false;
+    qualPlayTone = false;
+    messageState++;
   }
 }
 
@@ -849,35 +880,19 @@ void quantity() {
 		if (stepValue[3] == 1) {
 			if (!quantDistanceTimeSet) {
         quantNotePreviousMillis = currentMillis;
-        stereoMixerR.gain(0, 0);
-        stereoMixerL.gain(0, 1);
         quantMixer.gain(0, 0);
         quantDistanceTimeSet = true;
       }
 
       if (currentMillis - quantNotePreviousMillis <= quantDistanceTime) {
-        if (currentMillis - quantNotePreviousMillis <= quantDistanceTime/2) {
-          quantDistanceSine.frequency(quantDistanceSineFrequencies[0]);
-          stereoMixerR.gain(0, (currentMillis - quantNotePreviousMillis)/1600.0);
-        }
-        else {
-          quantDistanceSine.frequency(quantDistanceSineFrequencies[1]);
-          stereoMixerL.gain(0, -((currentMillis - quantNotePreviousMillis - 1600)/1600.0) + 1.0);
-        }
+        if (currentMillis - quantNotePreviousMillis <= quantDistanceTime/2) quantDistanceLFO.frequency(distanceLFOFrequencies[0]);
+        else quantDistanceLFO.frequency(distanceLFOFrequencies[1]);
 
-        if (currentMillis - quantNotePreviousMillis <= quantDistanceTime/4) {
-          quantMixer.gain(1, (currentMillis - quantNotePreviousMillis)/800.0);
-        }
-        else if (currentMillis - quantNotePreviousMillis >= (quantDistanceTime/4) * 3) {
-          quantMixer.gain(1, -((currentMillis - quantNotePreviousMillis - 2400)/800.0) + 1.0);
-        } 
+        if (currentMillis - quantNotePreviousMillis <= quantDistanceTime/4) quantMixer.gain(1, (currentMillis - quantNotePreviousMillis)/800.0);
+        else if (currentMillis - quantNotePreviousMillis >= (quantDistanceTime/4) * 3) quantMixer.gain(1, -((currentMillis - quantNotePreviousMillis - 2400)/800.0) + 1.0); 
       }
 
-      if (currentMillis - quantNotePreviousMillis >= quantDistanceTime + 2 * quantNoteClock) {
-        stereoMixerR.gain(0, 1);
-        stereoMixerL.gain(0, 1);
-        quantIntroPlayed = true;
-      }
+      if (currentMillis - quantNotePreviousMillis >= quantDistanceTime + 2 * quantNoteClock) quantIntroPlayed = true;
 
 		}
 		else if (stepValue[3] == 2) {
@@ -903,14 +918,14 @@ void quantity() {
 					tmpQuantValueCounter += String(quantValueString[i]).toInt();
 				}
 
-				introEnv.noteOn();
+				if (quantCounter < getCrossSum(quantValue)) introEnv.noteOn();
 				quantPlayTone = true;
 				quantCounter++;
 			}
 			else {
 				introEnv.noteOff();
 				quantPlayTone = false;
-        if (quantCounter >= getCrossSum(quantValue)) {
+        if (quantCounter >= getCrossSum(quantValue) + 2) {
           messageState++;
           quantIntroPlayed = false;
           quantDistanceTimeSet = false;
