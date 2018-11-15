@@ -41,6 +41,7 @@ Mathematische Formeln und Folgen werden als Einführung der Nachricht vorn an ge
 	- 0 - Kein interstellares Objekt
 	- 1 - Gasplanet (Jupiter)
 	- 2 - Gesteinsplanet (Venus)
+	- 3 - Gelber Zwergstern
 
 ## Nachricht
 
