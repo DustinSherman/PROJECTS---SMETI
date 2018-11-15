@@ -51,13 +51,24 @@ int segmentPlayCounter = 0;
 int segmentPlayMax = 3;
 
 // stepValue
-int stepValueMax[] = {4, 8, 9, 3, 2};
+int stepValueMax[] = {4, 8, 9, 3, 3};
 // Steps
 int stepSelected = 0;
 const int stepCount = 5;
 int stepValue[5] = {0, 0, 0, 0, 0};
 
-// ////////////////////////////// SEGMENTS ////////////////////////////////////////////////////////////
+boolean messagePlay = false;
+int messageState = 0;
+
+// ////////////////////////////// AUDIO ////////////////////////////////////////////////////////////
+
+// /////////////// AUDIO ELEMENTS ///////////////
+
+AudioMixer4              masterMixer0;
+AudioMixer4              masterMixer1;
+AudioMixer4              masterMixer;
+AudioOutputI2S           LineOut;
+AudioControlSGTL5000     audioShield;
 
 // /////////////// INTRODUCTION ///////////////
 
@@ -123,6 +134,12 @@ const int introSequences[][80] = {
   }
 };
 
+AudioSynthWaveformSine  introSine;
+AudioEffectEnvelope     introEnv;
+// Patches
+AudioConnection         patchIntro00(introSine, introEnv);
+AudioConnection         patchIntro01(introEnv, 0, masterMixer0, 0);
+
 // /////////////// REFERENCE AND FORM ///////////////
 
 unsigned int referenceTime = 2000;
@@ -135,6 +152,21 @@ unsigned long formNotePreviousMillis = 0;
 unsigned int formNoteClock = 2000;
 int formCounter = 0;
 boolean formPlayTone = false;
+
+AudioSynthNoiseWhite    referNoise;
+AudioFilterStateVariable referFilter;
+AudioSynthWaveformSine  referLFO;
+AudioEffectMultiply     referMultiply;
+AudioSynthWaveformSine   formSine;
+AudioEffectEnvelope      formEnv;
+
+// Patches
+AudioConnection         patchRefer00(referNoise, 0, referMultiply, 0);
+AudioConnection         patchRefer01(referLFO, 0, referMultiply, 1);
+AudioConnection         patchRefer02(referMultiply, referFilter);
+AudioConnection         patchRefer03(referFilter, 1, masterMixer0, 1);
+AudioConnection         patchForm00(formSine, formEnv);
+AudioConnection         patchForm01(formEnv, 0, masterMixer0, 2);
 
 // /////////////// QUALITY ///////////////
 
@@ -156,74 +188,6 @@ const int qualDurFrequencies[][3] = {
   {349, 440, 523}, // F4-Dur
   {523, 659, 784}, // C5-Dur
 };
-
-// /////////////// QUANTITY ///////////////
-
-unsigned long quantNotePreviousMillis = 0;
-unsigned int quantNoteClock = introNoteClock;
-boolean quantPlayTone = false;
-
-boolean quantIntroPlayed = false;
-
-boolean quantDistanceTimeSet = false;
-unsigned int quantDistanceTime = quantNoteClock * 8;
-int distanceLFOFrequencies[] = {10, 7};
-
-int quantIntroTimeCounter = 0;
-int quantIntroTimeFrequencies[] = {70, 30};
-
-int quantCounter = 0;
-
-int quantValue = 1;
-int tmpQuantValueCounter = 0;
-String quantValueString;
-
-boolean quantValueSet = false;
-unsigned long quantValuePreviousMillis;
-boolean quantValuePreviousSet = false;
-const unsigned int quantValueSetTiming[] = {400, 50};
-
-// ////////////////////////////// STRUCTURE ////////////////////////////////////////////////////////////
-
-boolean messagePlay = false;
-int messageState = 0;
-
-// ////////////////////////////// AUDIO ////////////////////////////////////////////////////////////
-
-// /////////////// AUDIO ELEMENTS ///////////////
-
-AudioMixer4              masterMixer0;
-AudioMixer4              masterMixer1;
-AudioMixer4              masterMixer;
-AudioOutputI2S           LineOut;
-AudioControlSGTL5000     audioShield;
-
-// /////////////// INTRODUCTION ///////////////
-
-AudioSynthWaveformSine  introSine;
-AudioEffectEnvelope     introEnv;
-// Patches
-AudioConnection         patchIntro00(introSine, introEnv);
-AudioConnection         patchIntro01(introEnv, 0, masterMixer0, 0);
-
-// /////////////// REFERENCE AND FORM ///////////////
-
-AudioSynthNoiseWhite    referNoise;
-AudioFilterStateVariable referFilter;
-AudioSynthWaveformSine  referLFO;
-AudioEffectMultiply     referMultiply;
-AudioSynthWaveformSine   formSine;
-AudioEffectEnvelope      formEnv;
-
-// Patches
-AudioConnection         patchRefer00(referNoise, 0, referMultiply, 0);
-AudioConnection         patchRefer01(referLFO, 0, referMultiply, 1);
-AudioConnection         patchRefer02(referMultiply, referFilter);
-AudioConnection         patchRefer03(referFilter, 1, masterMixer0, 1);
-AudioConnection         patchForm00(formSine, formEnv);
-AudioConnection         patchForm01(formEnv, 0, masterMixer0, 2);
-
-// /////////////// QUALITY ///////////////
 
 AudioSynthWaveformSine  qualSine0;
 AudioEffectEnvelope     qualSine0Env;
@@ -266,6 +230,30 @@ AudioConnection         patchQual13(qualMollMixer, 0, qualMixer, 1);
 AudioConnection         patchQual14(qualMixer, 0, masterMixer0, 3);
 
 // /////////////// QUANTITY ///////////////
+
+unsigned long quantNotePreviousMillis = 0;
+unsigned int quantNoteClock = introNoteClock;
+boolean quantPlayTone = false;
+
+boolean quantIntroPlayed = false;
+
+boolean quantDistanceTimeSet = false;
+unsigned int quantDistanceTime = quantNoteClock * 8;
+int distanceLFOFrequencies[] = {10, 7};
+
+int quantIntroTimeCounter = 0;
+int quantIntroTimeFrequencies[] = {70, 30};
+
+int quantCounter = 0;
+
+int quantValue = 1;
+int tmpQuantValueCounter = 0;
+String quantValueString;
+
+boolean quantValueSet = false;
+unsigned long quantValuePreviousMillis;
+boolean quantValuePreviousSet = false;
+const unsigned int quantValueSetTiming[] = {400, 50};
 
 AudioSynthSimpleDrum    quantTimeDrum;
 
@@ -378,8 +366,30 @@ AudioConnection          patchPlanetRock25(planetRockFilterWaveform, 0, planetRo
 AudioConnection          patchPlanetRock26(planetRockMixer, 0, planetRockFilterMaster, 0);
 AudioConnection          patchPlanetRock27(planetRockFilterMaster, 0, planetMixer, 1);
 
-// PlanteMixer
+// Star (Sun / yellow dwarf)
+unsigned long starYelloDwarfNotePreviousMillis = 0;
+unsigned int starYelloDwarfNoteClock;
+unsigned int starYelloDwarfNoteClockMin = 300;
+unsigned int starYelloDwarfNoteClockMax = 800;
+int starYelloDwarfBitcrusherBits = 8;
+int starYelloDwarfBitcrusherSampleRate = 11025;
+int starYellowDwarfSineAmpMin = 30;
+int starYellowDwarfSineAmpMax = 150;
+int starYellowDwarfSineAmp = starYellowDwarfSineAmpMin;
+int starYellowDwarfSinePreviousAmp;
 
+AudioSynthNoisePink      starYellowDwarfNoise;
+AudioSynthWaveformSine   starYellowDwarfSine;
+AudioEffectBitcrusher    starYelloDwarfBitcrusher;
+AudioMixer4              starYellowDwarfMixer;
+
+// Patches
+AudioConnection          patchStarYellowDwarf00(starYellowDwarfNoise, starYelloDwarfBitcrusher);
+AudioConnection          patchStarYellowDwarf01(starYelloDwarfBitcrusher, 0, starYellowDwarfMixer, 0);
+AudioConnection          patchStarYellowDwarf02(starYellowDwarfSine, 0, starYellowDwarfMixer, 1);
+AudioConnection          patchStarYellowDwarf03(starYellowDwarfMixer, 0, planetMixer, 2);
+
+// PlanteMixer
 AudioConnection          patchPlanetMaster(planetMixer, 0, masterMixer1, 1);
 
 // /////////////// MASTER ///////////////
@@ -505,6 +515,15 @@ void setup() {
   planetRockMixer.gain(1, 1);
   planetRockMixer.gain(2, 1);
   planetRockMixer.gain(3, 0.4);
+
+  // Star (Yellow Dwarf / Sun)
+  starYellowDwarfNoise.amplitude(0.01);
+  starYellowDwarfSine.frequency(76);
+  starYellowDwarfSine.amplitude(starYellowDwarfSineAmp);
+  starYelloDwarfBitcrusher.bits(starYelloDwarfBitcrusherBits);
+  starYelloDwarfBitcrusher.bits(starYelloDwarfBitcrusherSampleRate);
+
+
 
   masterMixer0.gain(1, 0);
   masterMixer1.gain(1, 0);
@@ -955,11 +974,19 @@ void interstellarObject() {
     planetGas();
     planetMixer.gain(0, 1);
     planetMixer.gain(1, 0);
+    planetMixer.gain(2, 0);    
   }
   else if (stepValue[4] == 2) {
     planetRock();
     planetMixer.gain(0, 0);
     planetMixer.gain(1, 1);
+    planetMixer.gain(2, 0); 
+  }
+  else if (stepValue[4] == 3) {
+    starYelloDwarf();
+    planetMixer.gain(0, 0);
+    planetMixer.gain(1, 0);
+    planetMixer.gain(2, 1); 
   }
 }
 
@@ -983,4 +1010,16 @@ void planetRock() {
   planetRockWaveform07.frequency(planetRockSineFreq + 8.3);
 
   planetRockSine00.frequency(pulse(32, 880, 940));
+}
+
+void starYelloDwarf() {
+  if (currentMillis - starYelloDwarfNotePreviousMillis >= starYelloDwarfNoteClock) {
+    starYelloDwarfNotePreviousMillis = currentMillis;
+    starYelloDwarfNoteClock = random(starYelloDwarfNoteClockMin, starYelloDwarfNoteClockMax);
+    starYellowDwarfSinePreviousAmp = starYellowDwarfSineAmp;
+    starYellowDwarfSineAmp = random(starYellowDwarfSineAmpMin, starYellowDwarfSineAmpMax);
+  }
+  else {
+    starYellowDwarfSine.amplitude(map(currentMillis - starYelloDwarfNotePreviousMillis, 0, starYelloDwarfNoteClock, starYellowDwarfSinePreviousAmp, starYellowDwarfSineAmp)/100.0);
+  }
 }
