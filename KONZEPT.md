@@ -42,6 +42,7 @@ Mathematische Formeln und Folgen werden als Einführung der Nachricht vorn an ge
 	- 1 - Gasplanet (Jupiter)
 	- 2 - Gesteinsplanet (Venus)
 	- 3 - Gelber Zwergstern
+	- 4 - Roter Zwergstern
 
 ## Nachricht
 

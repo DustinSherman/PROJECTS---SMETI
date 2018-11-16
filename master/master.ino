@@ -274,6 +274,13 @@ AudioConnection         patchQuant05(quantMixer, 0, masterMixer1, 0);
 
 // /////////////// INTERSTELAR OBJECTS ///////////////
 
+unsigned long interstellarFadePreviousMillis[] = {0, 0};
+boolean interstellarFadePreviousMillisSet[] = {false, false};
+const int interstellarPlayClock = 2400;
+const int interstellarFadeClock = 800;
+float interstellarGain = 0;
+float interstellarLowGain = 0.3;
+
 AudioMixer4              planetMixer;
 
 // Gas Planet (Jupiter)
@@ -390,7 +397,7 @@ AudioConnection          patchStarYellowDwarf02(starYellowDwarfSine, 0, starYell
 AudioConnection          patchStarYellowDwarf03(starYellowDwarfMixer, 0, planetMixer, 2);
 
 // Star (red dwarf)
-int starRedDwarfWaveformFreq = 45;
+int starRedDwarfWaveformFreq = 65;
 
 AudioSynthNoisePink      starRedDwarfNoise;
 AudioFilterStateVariable starRedDwarfNoiseFilter;
@@ -541,7 +548,7 @@ void setup() {
   starRedDwarfNoise.amplitude(0.09);
   starRedDwarfNoiseFilter.frequency(1200);
   starRedDwarfNoiseFilter.resonance(1.4);
-  starRedDwarfWaveform.begin(0.7, starRedDwarfWaveformFreq, WAVEFORM_PULSE);
+  starRedDwarfWaveform.begin(0.7, starRedDwarfWaveformFreq, WAVEFORM_SINE);
 
   masterMixer0.gain(1, 0);
   masterMixer1.gain(1, 0);
@@ -586,8 +593,11 @@ void loop() {
         if (stepValue[3] != 0) quantity();
         else messageState++;
       }
+      else if (messageState == 4) {
+        if (stepValue[4] == 0) messageState++;
+      }
     }
-    if (messageState >= 4) {
+    if (messageState > 4) {
       resetAllCounters();
       messageState = 0;
     }
@@ -597,8 +607,13 @@ void loop() {
 void resetAllCounters() {
   segmentPlayCounter = 0;
   introDeciCounter = 0;
+  introSine.frequency(introDeciFrequencies[0]);
   quantIntroTimeCounter = 0;
   quantCounter = 0;
+  for (int i = 0; i < 2; i++) {
+    interstellarFadePreviousMillisSet[i] = false;
+    interstellarFadePreviousMillis[i] = 0;
+  }
 }
 
 void resetAll() {
@@ -621,7 +636,7 @@ void resetAll() {
   stepSelected = 0;
   messageState = 0;
   messagePlay = false;
-  quantValue = 1;
+  quantValue = 0;
   quantIntroPlayed = false;
   masterMixer0.gain(1, 0);
   masterMixer1.gain(1, 0);
@@ -670,7 +685,7 @@ void encoder() {
     }
     else {
       if (quantValue > 99999) quantValue = 99999;
-      else if (quantValue < 1) quantValue = 1;
+      else if (quantValue < 0) quantValue = 0;
     }
   }
 
@@ -734,6 +749,7 @@ void shiftregister() {
 // ////////////////////////////// INTRODUCTION //////////////////////////////
 
 void introduction() {
+
   if (introDeciCounter < 51) {
     if (currentMillis - introNotePreviousMillis >= introNoteClock) {
       introNotePreviousMillis = currentMillis;
@@ -913,7 +929,7 @@ void quality() {
 void quantity() {
 	quantValueString = String(quantValue);
 
-  if (!quantIntroPlayed) {
+  if (!quantIntroPlayed && quantValue != 0) {
 		if (stepValue[3] == 1) {
 			if (!quantDistanceTimeSet) {
         quantNotePreviousMillis = currentMillis;
@@ -985,48 +1001,109 @@ int getCrossSum(int value) {
 // ////////////////////////////// INTERSTELLAR OBJECTS //////////////////////////////
 
 void interstellarObject() {
-  if (stepValue[4] == 0) masterMixer1.gain(1, 0);
-  else masterMixer1.gain(1, 1);
+  if (stepValue[4] == 1) planetGas();
+  else if (stepValue[4] == 2) planetRock();
+  else if (stepValue[4] == 3) starYelloDwarf();
 
   for (int i = 1; i <= stepValueMax[4]; i++) {
     if (stepValue[4] == i) {
       for (int j = 0; j < 4; j++) {
-        if (j == i - 1) planetMixer.gain(j, 0.6);
+        if (j == i - 1) planetMixer.gain(j, 1);
         else planetMixer.gain(j, 0);
       }
     }
   }
 
-  /*
-  if (stepValue[4] == 1) {
-    planetGas();
-    planetMixer.gain(0, 1);
-    planetMixer.gain(1, 0);
-    planetMixer.gain(2, 0);
-    planetMixer.gain(3, 0);
+  if (stepValue[4] != 0) {
+    if (stepValue[0] != 0 && (stepValue[1] != 0 || stepValue[2] != 0 || stepValue[3] != 0)) {
+      interstellarGain = 0;
+      if (messageState > 0 && messageState < 4) {
+        if (!interstellarFadePreviousMillisSet[0]) {
+          interstellarFadePreviousMillis[0] = currentMillis;
+          interstellarFadePreviousMillisSet[0] = true;
+        }
+        if (currentMillis - interstellarFadePreviousMillis[0] <= interstellarFadeClock) {
+          interstellarGain = (currentMillis - interstellarFadePreviousMillis[0])/float(interstellarFadeClock) * interstellarLowGain;
+        }
+        else interstellarGain = interstellarLowGain;
+      }
+      else if (messageState == 4) {
+        if (!interstellarFadePreviousMillisSet[1]) {
+          interstellarFadePreviousMillis[1] = currentMillis;
+          interstellarFadePreviousMillisSet[1] = true;
+        }
+
+        if (currentMillis - interstellarFadePreviousMillis[1] <= interstellarFadeClock) {
+          interstellarGain = ((currentMillis - interstellarFadePreviousMillis[1])/float(interstellarFadeClock)) * (1 - interstellarLowGain) + interstellarLowGain;
+        }
+        else if (currentMillis - interstellarFadePreviousMillis[1] > interstellarFadeClock && currentMillis - interstellarFadePreviousMillis[1] <= interstellarPlayClock + interstellarFadeClock) {
+          interstellarGain = 1.0;
+        }
+        else if (currentMillis - interstellarFadePreviousMillis[1] > interstellarPlayClock + interstellarFadeClock && currentMillis - interstellarFadePreviousMillis[1] <= interstellarPlayClock + interstellarFadeClock * 2) {
+          interstellarGain = ((currentMillis - interstellarFadePreviousMillis[1] - float(interstellarPlayClock + interstellarFadeClock * 2))/float(interstellarFadeClock)) * -1.0;
+        }
+        else if (currentMillis - interstellarFadePreviousMillis[1] > interstellarPlayClock + interstellarFadeClock * 2 && currentMillis - interstellarFadePreviousMillis[1] <= interstellarPlayClock + interstellarFadeClock * 3) {
+          interstellarGain = 0;
+        }
+        else if (currentMillis - interstellarFadePreviousMillis[1] > interstellarPlayClock + interstellarFadeClock * 3) {
+          messageState++;
+        }      
+      }
+      masterMixer1.gain(1, interstellarGain);
+    }
+    else if (stepValue[0] != 0 && (stepValue[1] == 0 && stepValue[2] == 0 && stepValue[3] == 0)) {
+      if (messageState == 4) {
+        if (!interstellarFadePreviousMillisSet[1]) {
+          interstellarFadePreviousMillis[1] = currentMillis;
+          interstellarFadePreviousMillisSet[1] = true;
+        }
+
+        if (currentMillis - interstellarFadePreviousMillis[1] <= interstellarFadeClock) {
+          interstellarGain = (currentMillis - interstellarFadePreviousMillis[1])/float(interstellarFadeClock);
+        }
+        else if (currentMillis - interstellarFadePreviousMillis[1] > interstellarPlayClock + interstellarFadeClock && currentMillis - interstellarFadePreviousMillis[1] <= interstellarPlayClock + interstellarFadeClock * 2) {
+          interstellarGain = ((currentMillis - interstellarFadePreviousMillis[1] - float(interstellarPlayClock + interstellarFadeClock * 2))/float(interstellarFadeClock)) * -1.0;
+        }
+        else if (currentMillis - interstellarFadePreviousMillis[1] > interstellarPlayClock + interstellarFadeClock * 2 && currentMillis - interstellarFadePreviousMillis[1] <= interstellarPlayClock + interstellarFadeClock * 3) {
+          interstellarGain = 0;
+        }
+        else if (currentMillis - interstellarFadePreviousMillis[1] > interstellarPlayClock + interstellarFadeClock * 3) {
+          messageState++;
+        }
+      }
+      masterMixer1.gain(1, interstellarGain);
+    }
+
+    else if (stepValue[0] == 0 && (stepValue[1] != 0 || stepValue[2] != 0 || stepValue[3] != 0)) {
+      interstellarGain = interstellarLowGain;
+      if (messageState == 4) {
+        if (!interstellarFadePreviousMillisSet[1]) {
+          interstellarFadePreviousMillis[1] = currentMillis;
+          interstellarFadePreviousMillisSet[1] = true;
+        }
+
+        if (currentMillis - interstellarFadePreviousMillis[1] <= interstellarFadeClock) {
+          interstellarGain = ((currentMillis - interstellarFadePreviousMillis[1])/float(interstellarFadeClock)) * (1 - interstellarLowGain) + interstellarLowGain;
+        }
+        else if (currentMillis - interstellarFadePreviousMillis[1] > interstellarFadeClock && currentMillis - interstellarFadePreviousMillis[1] <= interstellarPlayClock + interstellarFadeClock) {
+          interstellarGain = 1.0;
+        }
+        else if (currentMillis - interstellarFadePreviousMillis[1] > interstellarPlayClock + interstellarFadeClock && currentMillis - interstellarFadePreviousMillis[1] <= interstellarPlayClock + interstellarFadeClock * 2) {
+          interstellarGain = ((currentMillis - interstellarFadePreviousMillis[1] - float(interstellarFadeClock * 5))/float(interstellarFadeClock)) * -(1.0 - interstellarLowGain) + interstellarLowGain;
+        }
+        else if (currentMillis - interstellarFadePreviousMillis[1] > interstellarPlayClock + interstellarFadeClock * 2 && currentMillis - interstellarFadePreviousMillis[1] <= interstellarPlayClock + interstellarFadeClock * 3) {
+          interstellarGain = interstellarLowGain;
+        }
+        else if (currentMillis - interstellarFadePreviousMillis[1] > interstellarPlayClock + interstellarFadeClock * 3) {
+          messageState++;
+        }
+      }
+      masterMixer1.gain(1, interstellarGain); 
+    }
+    else if (stepValue[0] == 0 && stepValue[1] == 0 && stepValue[2] == 0 && stepValue[3] == 0) {
+      masterMixer1.gain(1, 1);
+    }
   }
-  else if (stepValue[4] == 2) {
-    planetRock();
-    planetMixer.gain(0, 0);
-    planetMixer.gain(1, 1);
-    planetMixer.gain(2, 0);
-    planetMixer.gain(3, 0); 
-  }
-  else if (stepValue[4] == 3) {
-    starYelloDwarf();
-    planetMixer.gain(0, 0);
-    planetMixer.gain(1, 0);
-    planetMixer.gain(2, 1);
-    planetMixer.gain(3, 0); 
-  }
-    else if (stepValue[4] == 4) {
-    starYelloDwarf();
-    planetMixer.gain(0, 0);
-    planetMixer.gain(1, 0);
-    planetMixer.gain(2, 0);
-    planetMixer.gain(3, 1); 
-  }
-  */
 }
 
 float pulse(int intervalTime, float pulseMin, float pulseMax) {
