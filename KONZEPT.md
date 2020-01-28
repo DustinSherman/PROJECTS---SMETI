@@ -2,7 +2,7 @@
 
 ## SMETI
 
-SMETI steht für sythesized messages for extraterestrial intelligence life. Dieser Prozess sieht vor eine Nachricht über Klangsynthese zu codieren so dass sie im Idealfall unabhängig von Kultur und Sprache verstanden werden kann Der Sender stellt dafür am Gerät selber den Inhalt der Nachricht zusammen um anschließend als Klangsynthese wieder gegeben werden. Der erste Wert bestimmt dabei ob und welche Art von Begrüßungsnachricht vorn an gestellt werden soll, der zweite Wert ob es sich um eine Frage oder Aussage handelt und auf wen sich diese bezieht. Mit dem dritten Wert lassen sich quantitive Aussagen machen über Distanz, Zeit und Anzahl. Der vierte Wert kann Aussagen über interstellare Objekte machen und orientiert sich dabei an den Objekten in unserem Sonnensystem (Jupiter, Venus, Mars, Erde, Saturn (Ringe), Sonne).
+SMETI steht für sythesized messages for extraterestrial intelligence life. Dieser Prozess sieht vor eine Nachricht über Klangsynthese zu codieren so dass sie im Idealfall unabhängig von Kultur und Sprache verstanden werden kann Der Sender stellt dafür am Gerät selber den Inhalt der Nachricht zusammen um anschließend als Klangsynthese wieder gegeben werden. Der erste Wert bestimmt dabei ob und welche Art von Begrüßungsnachricht vorn an gestellt werden soll, der zweite Wert ob es sich um eine Frage oder Aussage handelt und auf wen sich diese bezieht. Mit dem dritten Wert lassen sich quantitive Aussagen machen über Distanz, Zeit und Anzahl. Der vierte Wert kann Aussagen über interstellare Objekte machen (Jupiter, Venus, Sonne (Gelber Zwergstern), Roter Zwergstern).
 
 ## Inhalte
 

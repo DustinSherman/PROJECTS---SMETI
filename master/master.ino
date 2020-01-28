@@ -8,9 +8,9 @@
 // Shift Register
 #include <ShiftRegister74HC595.h>
 const int shiCount = 5;
-const int shiSTCP = 4; // latchPin
-const int shiSHCP = 3; // clockPin
-const int shiDS = 2;// serial Data Pin
+const int shiSTCP = 1; // latchPin
+const int shiSHCP = 2; // clockPin
+const int shiDS = 0;// serial Data Pin
 ShiftRegister74HC595 shiftRegister (shiCount, shiDS, shiSHCP, shiSTCP); 
 
 // Encoder
@@ -18,10 +18,10 @@ ShiftRegister74HC595 shiftRegister (shiCount, shiDS, shiSHCP, shiSTCP);
 #include <Encoder.h>
 #include <Bounce2.h>
 long encPos  = -999;
-const int encPin0 = 20;
-const int encPin1 = 17;
+const int encPin0 = 3;
+const int encPin1 = 4;
 Encoder enc(encPin0, encPin1);
-const int encBtn = 16;
+const int encBtn = 5;
 Bounce encBtnPush = Bounce();
 byte enBtnLast = HIGH;
 
@@ -32,18 +32,18 @@ unsigned long currentMillis = 0;
 int segmentDigit[14][7] = {
   {1, 1, 1, 0, 1, 1, 1},  // 0
   {0, 0, 1, 0, 1, 0, 0},  // 1
-  {0, 1, 0, 1, 1, 1, 1},  // 2
-  {0, 1, 1, 1, 1, 0, 1},  // 3
+  {0, 1, 1, 1, 0, 1, 1},  // 2
+  {0, 1, 1, 1, 1, 1, 0},  // 3
   {1, 0, 1, 1, 1, 0, 0},  // 4
-  {1, 1, 1, 1, 0, 0, 1},  // 5
-  {1, 1, 1, 1, 0, 1, 1},  // 6
-  {0, 0, 1, 0, 1, 0, 1},  // 7
+  {1, 1, 0, 1, 1, 1, 0},  // 5
+  {1, 1, 0, 1, 1, 1, 1},  // 6
+  {0, 1, 1, 0, 1, 0, 0},  // 7
   {1, 1, 1, 1, 1, 1, 1},  // 8
-  {1, 1, 1, 1, 1, 0, 1},  // 9
-  {0, 0, 0, 0, 0, 0, 1},  // Oberer Strich
+  {1, 1, 1, 1, 1, 1, 0},  // 9
+  {0, 1, 0, 0, 0, 0, 0},  // Oberer Strich
   {0, 0, 0, 1, 0, 0, 0},  // Mittlerer Strich
-  {0, 1, 0, 0, 0, 0, 0},  // Unterer Strich
-  {0, 1, 0, 1, 0, 0, 1}   // Alle Querstriche
+  {0, 0, 0, 0, 0, 1, 0},  // Unterer Strich
+  {0, 1, 0, 1, 0, 1, 0}   // Alle Querstriche
 };
 unsigned long segmentPlayPreviousMillis = 0;
 unsigned int segmentPlayClock = 500;
@@ -51,7 +51,7 @@ int segmentPlayCounter = 0;
 int segmentPlayMax = 3;
 
 // stepValue
-int stepValueMax[] = {4, 8, 9, 3, 4};
+int stepValueMax[] = {4, 8, 9, 3, 5};
 // Steps
 int stepSelected = 0;
 const int stepCount = 5;
@@ -281,6 +281,8 @@ const int interstellarFadeClock = 800;
 float interstellarGain = 0;
 float interstellarLowGain = 0.3;
 
+AudioMixer4              planetMixer00;
+AudioMixer4              planetMixer01;
 AudioMixer4              planetMixer;
 
 // Gas Planet (Jupiter)
@@ -303,7 +305,7 @@ AudioConnection          patchPlanetGas01(planetGasSine, planetGasFilterSine);
 AudioConnection          patchPlanetGas02(planetGasFilterSine, planetGasChorus);
 AudioConnection          patchPlanetGas03(planetGasChorus, 0, planetGasMixer, 0);
 AudioConnection          patchPlanetGas04(planetGasFilterNoise, 0, planetGasMixer, 1);
-AudioConnection          patchPlanetGas05(planetGasMixer, 0, planetMixer, 0);
+AudioConnection          patchPlanetGas05(planetGasMixer, 0, planetMixer00, 0);
 
 // Rockplanet (Venus)
 AudioSynthWaveformSine   planetRockSine00;
@@ -371,7 +373,7 @@ AudioConnection          patchPlanetRock24(planetRockMultiply02, planetRockFilte
 AudioConnection          patchPlanetRock25(planetRockFilterWaveform, 0, planetRockMixer, 3);
 
 AudioConnection          patchPlanetRock26(planetRockMixer, 0, planetRockFilterMaster, 0);
-AudioConnection          patchPlanetRock27(planetRockFilterMaster, 0, planetMixer, 1);
+AudioConnection          patchPlanetRock27(planetRockFilterMaster, 0, planetMixer00, 1);
 
 // Star (Sun / yellow dwarf)
 unsigned long starYelloDwarfNotePreviousMillis = 0;
@@ -394,7 +396,7 @@ AudioMixer4              starYellowDwarfMixer;
 AudioConnection          patchStarYellowDwarf00(starYellowDwarfNoise, starYelloDwarfBitcrusher);
 AudioConnection          patchStarYellowDwarf01(starYelloDwarfBitcrusher, 0, starYellowDwarfMixer, 0);
 AudioConnection          patchStarYellowDwarf02(starYellowDwarfSine, 0, starYellowDwarfMixer, 1);
-AudioConnection          patchStarYellowDwarf03(starYellowDwarfMixer, 0, planetMixer, 2);
+AudioConnection          patchStarYellowDwarf03(starYellowDwarfMixer, 0, planetMixer00, 2);
 
 // Star (red dwarf)
 int starRedDwarfWaveformFreq = 65;
@@ -408,10 +410,21 @@ AudioMixer4              starRedDwarfMixer;
 AudioConnection          patchStarRedDwarf00(starRedDwarfNoise, starRedDwarfNoiseFilter);
 AudioConnection          patchStarRedDwarf01(starRedDwarfNoiseFilter, 0, starRedDwarfMixer, 0);
 AudioConnection          patchStarRedDwarf02(starRedDwarfWaveform, 0, starRedDwarfMixer, 1);
-AudioConnection          patchStarRedDwarf03(starRedDwarfMixer, 0, planetMixer, 3);
+AudioConnection          patchStarRedDwarf03(starRedDwarfMixer, 0, planetMixer00, 3);
+
+// Earth
+AudioSynthNoisePink      earthWaveNoise;
+AudioEffectChorus        earthChorusEffect;
+AudioMixer4              earthMixer;
+
+// Patches
+AudioConnection          patchEarth00(earthWaveNoise, earthChorusEffect);
+AudioConnection          patchEarth01(earthChorusEffect, 0, earthMixer, 0);
+AudioConnection          patchEarth02(earthMixer, 0, planetMixer01, 0);
 
 // PlanteMixer
-AudioConnection          patchPlanetMaster(planetMixer, 0, masterMixer1, 1);
+AudioConnection          patchPlanetMaster00(planetMixer00, 0, masterMixer1, 1);
+AudioConnection          patchPlanetMaster01(planetMixer01, 0, masterMixer1, 2);
 
 // /////////////// MASTER ///////////////
 
@@ -567,6 +580,9 @@ void setup() {
 // /////////////// LOOP ///////////////
 
 void loop() {
+
+	if (encBtnPush.read() == LOW) Serial.println("BUTTON");
+
   currentMillis = millis();
 
   AudioInterrupts();
