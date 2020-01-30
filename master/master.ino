@@ -5,6 +5,14 @@
 #include <Wire.h>
 #include <SPI.h>
 
+#include <SD.h>
+#include <SerialFlash.h>
+
+// Use these with the Teensy Audio Shield
+#define SDCARD_CS_PIN    10
+#define SDCARD_MOSI_PIN  7
+#define SDCARD_SCK_PIN   14
+
 // Shift Register
 #include <ShiftRegister74HC595.h>
 const int shiCount = 5;
@@ -413,14 +421,10 @@ AudioConnection          patchStarRedDwarf02(starRedDwarfWaveform, 0, starRedDwa
 AudioConnection          patchStarRedDwarf03(starRedDwarfMixer, 0, planetMixer00, 3);
 
 // Earth
-AudioSynthNoisePink      earthWaveNoise;
-AudioEffectChorus        earthChorusEffect;
-AudioMixer4              earthMixer;
+AudioPlaySdWav           earthWav;
 
 // Patches
-AudioConnection          patchEarth00(earthWaveNoise, earthChorusEffect);
-AudioConnection          patchEarth01(earthChorusEffect, 0, earthMixer, 0);
-AudioConnection          patchEarth02(earthMixer, 0, planetMixer01, 0);
+AudioConnection          patchEarth00(earthWav, 0, planetMixer01, 0);
 
 // PlanteMixer
 AudioConnection          patchPlanetMaster00(planetMixer00, 0, masterMixer1, 1);
@@ -575,14 +579,21 @@ void setup() {
   encBtnPush.interval(10);
 
   Serial.begin(9600);
+
+  SPI.setMOSI(SDCARD_MOSI_PIN);
+  SPI.setSCK(SDCARD_SCK_PIN);
+  if (!(SD.begin(SDCARD_CS_PIN))) {
+    // stop here, but print a message repetitively
+    while (1) {
+      Serial.println("Unable to access the SD card");
+      delay(500);
+    }
+  }
 }
 
 // /////////////// LOOP ///////////////
 
 void loop() {
-
-	if (encBtnPush.read() == LOW) Serial.println("BUTTON");
-
   currentMillis = millis();
 
   AudioInterrupts();
@@ -617,6 +628,9 @@ void loop() {
       resetAllCounters();
       messageState = 0;
     }
+  }
+  else {
+    earthWav.stop();
   }
 }
 
@@ -1020,12 +1034,17 @@ void interstellarObject() {
   if (stepValue[4] == 1) planetGas();
   else if (stepValue[4] == 2) planetRock();
   else if (stepValue[4] == 3) starYelloDwarf();
+  else if (stepValue[4] == 5) earth();
 
   for (int i = 1; i <= stepValueMax[4]; i++) {
     if (stepValue[4] == i) {
       for (int j = 0; j < 4; j++) {
-        if (j == i - 1) planetMixer.gain(j, 1);
-        else planetMixer.gain(j, 0);
+        if (j == i - 1) planetMixer00.gain(j, 1);
+        else planetMixer00.gain(j, 0);
+      }
+      for (int j = 4; j < 8; j++) {
+        if (j == i - 1) planetMixer01.gain(j - 4, 1);
+        else planetMixer01.gain(j - 4, 0);
       }
     }
   }
@@ -1066,6 +1085,7 @@ void interstellarObject() {
         }      
       }
       masterMixer1.gain(1, interstellarGain);
+      masterMixer1.gain(2, interstellarGain);
     }
     else if (stepValue[0] != 0 && (stepValue[1] == 0 && stepValue[2] == 0 && stepValue[3] == 0)) {
       if (messageState == 4) {
@@ -1088,6 +1108,7 @@ void interstellarObject() {
         }
       }
       masterMixer1.gain(1, interstellarGain);
+      masterMixer1.gain(2, interstellarGain);
     }
 
     else if (stepValue[0] == 0 && (stepValue[1] != 0 || stepValue[2] != 0 || stepValue[3] != 0)) {
@@ -1133,7 +1154,6 @@ void planetGas() {
 }
 
 void planetRock() {
-
   planetRockSineFreq = pulse(10, 43.6, 54.4);
 
   planetRockWaveform04.frequency(planetRockSineFreq + 29.8);
@@ -1154,4 +1174,22 @@ void starYelloDwarf() {
   else {
     starYellowDwarfSine.amplitude(map(currentMillis - starYelloDwarfNotePreviousMillis, 0, starYelloDwarfNoteClock, starYellowDwarfSinePreviousAmp, starYellowDwarfSineAmp)/100.0);
   }
+}
+
+void earth() {
+  if (!earthWav.isPlaying()) {
+    playFile("EARTH.WAV");
+  }
+}
+
+void playFile(const char *filename) {
+  Serial.print("Playing file: ");
+  Serial.println(filename);
+
+  // Start playing the file.  This sketch continues to
+  // run while the file plays.
+  earthWav.play(filename);
+
+  // A brief delay for the library read WAV info
+  delay(5);
 }
