@@ -447,7 +447,7 @@ void setup() {
 
   // AudioShield
   audioShield.enable();
-  audioShield.volume(0.7);
+  audioShield.volume(0.8);
 
   // Intro
   introSine.frequency(440);
